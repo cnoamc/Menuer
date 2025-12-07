@@ -45,13 +45,6 @@ export default function HomeScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {/* Hero Section */}
       <View style={styles.heroSection}>
-        <View style={styles.logoContainer}>
-          <Image 
-            source={require('@/assets/images/672db35d-e2ca-4488-ab2c-4599660517ec.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
         <Text style={styles.tagline}>Your Personal Diet Menu Generator</Text>
         <Text style={styles.subtitle}>
           Generate unlimited personalized menus for your specific diet goals
@@ -253,18 +246,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 40,
   },
-  logoContainer: {
-    width: 320,
-    height: 100,
-    marginBottom: 20,
-  },
-  logo: {
-    width: '100%',
-    height: '100%',
-  },
   tagline: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 28,
+    fontWeight: 'bold',
     color: colors.text,
     marginBottom: 12,
     textAlign: 'center',
