@@ -33,6 +33,7 @@ function RootLayoutNav() {
 
   useEffect(() => {
     if (!navigationState?.key || isLoading) {
+      console.log('Navigation not ready or still loading:', { navigationReady: !!navigationState?.key, isLoading });
       return;
     }
 
@@ -40,7 +41,13 @@ function RootLayoutNav() {
     const inTabsGroup = segments[0] === '(tabs)';
     const inProtectedRoute = inTabsGroup || segments[0] === 'diet' || segments[0] === 'menus';
 
-    console.log('Navigation check:', { user: !!user, inAuthGroup, inProtectedRoute, segments });
+    console.log('Navigation check:', { 
+      hasUser: !!user, 
+      inAuthGroup, 
+      inProtectedRoute, 
+      segments: segments.join('/'),
+      isLoading 
+    });
 
     if (!user && !inAuthGroup && inProtectedRoute) {
       // User is not signed in and trying to access protected route

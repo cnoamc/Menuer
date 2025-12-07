@@ -114,13 +114,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Starting sign out process...');
       
-      // Clear user session from AsyncStorage
+      // Clear user session from AsyncStorage first
       await AsyncStorage.removeItem('user');
       console.log('User session cleared from AsyncStorage');
       
-      // Clear user state
+      // Then clear user state - this will trigger the navigation in _layout.tsx
       setUser(null);
-      console.log('User state cleared, sign out complete');
+      console.log('User state set to null - sign out complete');
+      
+      // The navigation will be handled automatically by the useEffect in _layout.tsx
     } catch (error) {
       console.log('Error signing out:', error);
       throw error;

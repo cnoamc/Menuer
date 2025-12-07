@@ -25,8 +25,8 @@ export default function ProfileScreen() {
             console.log('User confirmed sign out');
             try {
               await signOut();
-              console.log('Sign out successful, redirecting to welcome');
-              router.replace('/auth/welcome');
+              console.log('Sign out completed - navigation will be handled automatically');
+              // Don't manually navigate - let _layout.tsx handle it
             } catch (error) {
               console.log('Error during sign out:', error);
               Alert.alert('Error', 'Failed to sign out. Please try again.');
