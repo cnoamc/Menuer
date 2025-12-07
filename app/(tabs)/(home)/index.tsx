@@ -47,7 +47,7 @@ export default function HomeScreen() {
       <View style={styles.heroSection}>
         <View style={styles.logoContainer}>
           <Image 
-            source={require('@/assets/images/c663f82d-b81a-4632-bd43-0fabaa667e19.png')}
+            source={require('@/assets/images/672db35d-e2ca-4488-ab2c-4599660517ec.png')}
             style={styles.logo}
             resizeMode="contain"
           />

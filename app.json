@@ -1,8 +1,7 @@
-
 {
   "expo": {
-    "name": "Menuer",
-    "slug": "menuer",
+    "name": "Diet Menu Generator",
+    "slug": "Diet Menu Generator",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/987fe83e-bdb9-4f18-93d6-09f02187d391.png",
@@ -45,5 +44,5 @@
       "router": {}
     }
   },
-  "scheme": "menuer"
+  "scheme": "Diet Menu Generator"
 }
