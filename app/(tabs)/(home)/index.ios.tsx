@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
@@ -7,12 +7,41 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH * 0.75;
-const CARD_SPACING = 16;
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
+
+  const howItWorksSteps = [
+    {
+      number: 1,
+      icon: 'fork.knife',
+      androidIcon: 'restaurant',
+      title: 'Choose Diet',
+      color: colors.primary,
+    },
+    {
+      number: 2,
+      icon: 'target',
+      androidIcon: 'flag',
+      title: 'Set Goals',
+      color: colors.secondary,
+    },
+    {
+      number: 3,
+      icon: 'sparkles',
+      androidIcon: 'auto_awesome',
+      title: 'Generate',
+      color: colors.accent,
+    },
+    {
+      number: 4,
+      icon: 'chart.line.uptrend.xyaxis',
+      androidIcon: 'trending_up',
+      title: 'Track',
+      color: colors.primary,
+    },
+  ];
 
   const features = [
     {
@@ -45,41 +74,6 @@ export default function HomeScreen() {
     },
   ];
 
-  const howItWorksSteps = [
-    {
-      number: 1,
-      icon: 'fork.knife',
-      androidIcon: 'restaurant',
-      title: 'Choose Your Diet',
-      description: 'Select from various diet types including Keto, Vegan, Mediterranean, and more',
-      color: colors.primary,
-    },
-    {
-      number: 2,
-      icon: 'target',
-      androidIcon: 'flag',
-      title: 'Set Your Goals',
-      description: 'Enter your current weight and target weight to track progress',
-      color: colors.secondary,
-    },
-    {
-      number: 3,
-      icon: 'sparkles',
-      androidIcon: 'auto_awesome',
-      title: 'Generate Menus',
-      description: 'Get personalized daily meal plans with nutritional information',
-      color: colors.accent,
-    },
-    {
-      number: 4,
-      icon: 'chart.line.uptrend.xyaxis',
-      androidIcon: 'trending_up',
-      title: 'Track & Succeed',
-      description: 'Monitor your progress and achieve your health goals',
-      color: colors.primary,
-    },
-  ];
-
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {/* Hero Section */}
@@ -91,37 +85,34 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* How It Works Slider */}
-      <View style={styles.howItWorksSection}>
-        <Text style={styles.sectionTitle}>How It Works</Text>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          snapToInterval={CARD_WIDTH + CARD_SPACING}
-          contentContainerStyle={styles.sliderContent}
-        >
+      {/* Minimized How It Works */}
+      <View style={styles.howItWorksCompact}>
+        <Text style={styles.compactTitle}>How It Works</Text>
+        <View style={styles.stepsRow}>
           {howItWorksSteps.map((step, index) => (
-            <View key={index} style={[styles.stepSlideCard, { width: CARD_WIDTH }]}>
-              <View style={[styles.stepIconContainer, { backgroundColor: step.color }]}>
+            <React.Fragment key={index}>
+              <View style={styles.compactStep}>
+                <View style={[styles.compactIconContainer, { backgroundColor: step.color }]}>
+                  <IconSymbol 
+                    ios_icon_name={step.icon} 
+                    android_material_icon_name={step.androidIcon as any} 
+                    size={20} 
+                    color={colors.card}
+                  />
+                </View>
+                <Text style={styles.compactStepNumber}>{step.number}</Text>
+                <Text style={styles.compactStepTitle}>{step.title}</Text>
+              </View>
+              {index < howItWorksSteps.length - 1 && (
                 <IconSymbol 
-                  ios_icon_name={step.icon} 
-                  android_material_icon_name={step.androidIcon as any} 
-                  size={40} 
-                  color={colors.card}
+                  ios_icon_name="arrow.right" 
+                  android_material_icon_name="arrow_forward" 
+                  size={16} 
+                  color={colors.textSecondary}
+                  style={styles.arrowIcon}
                 />
-              </View>
-              <View style={styles.stepNumberBadge}>
-                <Text style={styles.stepNumberBadgeText}>{step.number}</Text>
-              </View>
-              <Text style={styles.stepSlideTitle}>{step.title}</Text>
-              <Text style={styles.stepSlideDescription}>{step.description}</Text>
-            </View>
-          ))}
-        </ScrollView>
-        <View style={styles.dotsContainer}>
-          {howItWorksSteps.map((_, index) => (
-            <View key={index} style={styles.dot} />
+              )}
+            </React.Fragment>
           ))}
         </View>
       </View>
@@ -271,89 +262,62 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
   },
-  howItWorksSection: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 20,
-    paddingHorizontal: 20,
-  },
-  sliderContent: {
-    paddingHorizontal: (SCREEN_WIDTH - CARD_WIDTH) / 2,
-    gap: CARD_SPACING,
-  },
-  stepSlideCard: {
+  howItWorksCompact: {
     backgroundColor: colors.card,
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 320,
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 20,
+    marginBottom: 24,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.15,
-        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
       },
       android: {
-        elevation: 8,
+        elevation: 4,
       },
     }),
   },
-  stepIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  stepNumberBadge: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepNumberBadgeText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.card,
-  },
-  stepSlideTitle: {
-    fontSize: 24,
+  compactTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
   },
-  stepSlideDescription: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  dotsContainer: {
+  stepsRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 20,
-    gap: 8,
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.textSecondary,
-    opacity: 0.3,
+  compactStep: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  compactIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  compactStepNumber: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  compactStepTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  arrowIcon: {
+    marginHorizontal: 4,
   },
   welcomeCard: {
     backgroundColor: colors.primary,
@@ -417,6 +381,12 @@ const styles = StyleSheet.create({
   featuresSection: {
     marginBottom: 32,
     paddingHorizontal: 20,
+  },
+  sectionTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 20,
   },
   featuresGrid: {
     gap: 16,

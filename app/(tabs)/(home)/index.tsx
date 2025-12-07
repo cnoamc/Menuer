@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
@@ -11,6 +11,37 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
+
+  const howItWorksSteps = [
+    {
+      number: 1,
+      icon: 'fork.knife',
+      androidIcon: 'restaurant',
+      title: 'Choose Diet',
+      color: colors.primary,
+    },
+    {
+      number: 2,
+      icon: 'target',
+      androidIcon: 'flag',
+      title: 'Set Goals',
+      color: colors.secondary,
+    },
+    {
+      number: 3,
+      icon: 'sparkles',
+      androidIcon: 'auto_awesome',
+      title: 'Generate',
+      color: colors.accent,
+    },
+    {
+      number: 4,
+      icon: 'chart.line.uptrend.xyaxis',
+      androidIcon: 'trending_up',
+      title: 'Track',
+      color: colors.primary,
+    },
+  ];
 
   const features = [
     {
@@ -52,6 +83,38 @@ export default function HomeScreen() {
           style={styles.logo}
           resizeMode="contain"
         />
+      </View>
+
+      {/* Minimized How It Works */}
+      <View style={styles.howItWorksCompact}>
+        <Text style={styles.compactTitle}>How It Works</Text>
+        <View style={styles.stepsRow}>
+          {howItWorksSteps.map((step, index) => (
+            <React.Fragment key={index}>
+              <View style={styles.compactStep}>
+                <View style={[styles.compactIconContainer, { backgroundColor: step.color }]}>
+                  <IconSymbol 
+                    ios_icon_name={step.icon} 
+                    android_material_icon_name={step.androidIcon as any} 
+                    size={20} 
+                    color={colors.card}
+                  />
+                </View>
+                <Text style={styles.compactStepNumber}>{step.number}</Text>
+                <Text style={styles.compactStepTitle}>{step.title}</Text>
+              </View>
+              {index < howItWorksSteps.length - 1 && (
+                <IconSymbol 
+                  ios_icon_name="arrow.right" 
+                  android_material_icon_name="arrow_forward" 
+                  size={16} 
+                  color={colors.textSecondary}
+                  style={styles.arrowIcon}
+                />
+              )}
+            </React.Fragment>
+          ))}
+        </View>
       </View>
 
       {/* Welcome Message */}
@@ -198,6 +261,63 @@ const styles = StyleSheet.create({
   logo: {
     width: 120,
     height: 120,
+  },
+  howItWorksCompact: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 20,
+    marginBottom: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  compactTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  stepsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  compactStep: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  compactIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  compactStepNumber: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  compactStepTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  arrowIcon: {
+    marginHorizontal: 4,
   },
   welcomeCard: {
     backgroundColor: colors.primary,
