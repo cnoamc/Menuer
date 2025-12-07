@@ -1,6 +1,6 @@
 
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -8,35 +8,234 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
+  const features = [
+    {
+      icon: 'sparkles',
+      androidIcon: 'auto_awesome',
+      title: 'AI-Powered Menus',
+      description: 'Generate personalized meal plans tailored to your diet',
+      color: colors.primary,
+    },
+    {
+      icon: 'chart.line.uptrend.xyaxis',
+      androidIcon: 'trending_up',
+      title: 'Track Progress',
+      description: 'Monitor your weight and diet journey over time',
+      color: colors.secondary,
+    },
+    {
+      icon: 'fork.knife',
+      androidIcon: 'restaurant',
+      title: 'Multiple Diets',
+      description: 'Support for Keto, Vegan, Mediterranean, and more',
+      color: colors.accent,
+    },
+    {
+      icon: 'calendar',
+      androidIcon: 'calendar_today',
+      title: 'Menu History',
+      description: 'Access all your previous meal plans anytime',
+      color: colors.primary,
+    },
+  ];
 
-    if (user) {
-      // If user is authenticated, redirect to dashboard
-      console.log('User authenticated, redirecting to dashboard');
-      router.replace('/(tabs)/dashboard');
-    } else {
-      // If user is not authenticated, redirect to welcome screen
-      console.log('User not authenticated, redirecting to welcome');
-      router.replace('/auth/welcome');
-    }
-  }, [user, isLoading]);
-
-  // Show loading state while checking authentication
   return (
-    <View style={[styles.container, styles.centerContent]}>
-      <IconSymbol 
-        ios_icon_name="fork.knife" 
-        android_material_icon_name="restaurant" 
-        size={60} 
-        color={colors.primary}
-      />
-      <Text style={styles.loadingText}>Loading...</Text>
-    </View>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      {/* Hero Section */}
+      <View style={styles.heroSection}>
+        <View style={styles.logoContainer}>
+          <IconSymbol 
+            ios_icon_name="fork.knife.circle.fill" 
+            android_material_icon_name="restaurant" 
+            size={80} 
+            color={colors.primary}
+          />
+        </View>
+        <Text style={styles.appTitle}>Menuer</Text>
+        <Text style={styles.tagline}>Your Personal Diet Menu Generator</Text>
+        <Text style={styles.subtitle}>
+          Generate unlimited personalized menus for your specific diet goals
+        </Text>
+      </View>
+
+      {/* Welcome Message */}
+      {user && (
+        <View style={styles.welcomeCard}>
+          <View style={styles.welcomeContent}>
+            <View style={styles.welcomeTextContainer}>
+              <Text style={styles.welcomeTitle}>Welcome back, {user.name}!</Text>
+              <Text style={styles.welcomeSubtitle}>Ready to plan your next meal?</Text>
+            </View>
+            {user.profileImage && (
+              <Image 
+                source={{ uri: user.profileImage }} 
+                style={styles.welcomeProfileImage}
+              />
+            )}
+          </View>
+          <TouchableOpacity 
+            style={styles.dashboardButton}
+            onPress={() => router.push('/(tabs)/dashboard')}
+          >
+            <Text style={styles.dashboardButtonText}>Go to Dashboard</Text>
+            <IconSymbol 
+              ios_icon_name="arrow.right" 
+              android_material_icon_name="arrow_forward" 
+              size={20} 
+              color={colors.card}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Features Section */}
+      <View style={styles.featuresSection}>
+        <Text style={styles.sectionTitle}>Features</Text>
+        <View style={styles.featuresGrid}>
+          {features.map((feature, index) => (
+            <React.Fragment key={index}>
+              <View style={styles.featureCard}>
+                <View style={[styles.featureIconContainer, { backgroundColor: feature.color }]}>
+                  <IconSymbol 
+                    ios_icon_name={feature.icon} 
+                    android_material_icon_name={feature.androidIcon as any} 
+                    size={32} 
+                    color={colors.card}
+                  />
+                </View>
+                <Text style={styles.featureTitle}>{feature.title}</Text>
+                <Text style={styles.featureDescription}>{feature.description}</Text>
+              </View>
+            </React.Fragment>
+          ))}
+        </View>
+      </View>
+
+      {/* How It Works Section */}
+      <View style={styles.howItWorksSection}>
+        <Text style={styles.sectionTitle}>How It Works</Text>
+        <View style={styles.stepsContainer}>
+          <View style={styles.stepCard}>
+            <View style={styles.stepNumber}>
+              <Text style={styles.stepNumberText}>1</Text>
+            </View>
+            <View style={styles.stepContent}>
+              <Text style={styles.stepTitle}>Choose Your Diet</Text>
+              <Text style={styles.stepDescription}>
+                Select from various diet types including Keto, Vegan, Mediterranean, and more
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.stepCard}>
+            <View style={styles.stepNumber}>
+              <Text style={styles.stepNumberText}>2</Text>
+            </View>
+            <View style={styles.stepContent}>
+              <Text style={styles.stepTitle}>Set Your Goals</Text>
+              <Text style={styles.stepDescription}>
+                Enter your current weight and target weight to track progress
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.stepCard}>
+            <View style={styles.stepNumber}>
+              <Text style={styles.stepNumberText}>3</Text>
+            </View>
+            <View style={styles.stepContent}>
+              <Text style={styles.stepTitle}>Generate Menus</Text>
+              <Text style={styles.stepDescription}>
+                Get personalized daily meal plans with nutritional information
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.stepCard}>
+            <View style={styles.stepNumber}>
+              <Text style={styles.stepNumberText}>4</Text>
+            </View>
+            <View style={styles.stepContent}>
+              <Text style={styles.stepTitle}>Track & Succeed</Text>
+              <Text style={styles.stepDescription}>
+                Monitor your progress and achieve your health goals
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* CTA Section */}
+      {!user && (
+        <View style={styles.ctaSection}>
+          <Text style={styles.ctaTitle}>Ready to Start Your Journey?</Text>
+          <Text style={styles.ctaSubtitle}>
+            Join thousands of users achieving their diet goals
+          </Text>
+          <TouchableOpacity 
+            style={styles.ctaButton}
+            onPress={() => router.push('/auth/welcome')}
+          >
+            <Text style={styles.ctaButtonText}>Get Started</Text>
+            <IconSymbol 
+              ios_icon_name="arrow.right.circle.fill" 
+              android_material_icon_name="arrow_circle_right" 
+              size={24} 
+              color={colors.card}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Quick Actions for Authenticated Users */}
+      {user && (
+        <View style={styles.quickActionsSection}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.quickActionsGrid}>
+            <TouchableOpacity 
+              style={styles.quickActionCard}
+              onPress={() => router.push('/diet/select')}
+            >
+              <IconSymbol 
+                ios_icon_name="fork.knife" 
+                android_material_icon_name="restaurant" 
+                size={32} 
+                color={colors.primary}
+              />
+              <Text style={styles.quickActionText}>Change Diet</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.quickActionCard}
+              onPress={() => router.push('/menus/history')}
+            >
+              <IconSymbol 
+                ios_icon_name="clock.arrow.circlepath" 
+                android_material_icon_name="history" 
+                size={32} 
+                color={colors.secondary}
+              />
+              <Text style={styles.quickActionText}>Menu History</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.quickActionCard}
+              onPress={() => router.push('/(tabs)/profile')}
+            >
+              <IconSymbol 
+                ios_icon_name="person.circle" 
+                android_material_icon_name="account_circle" 
+                size={32} 
+                color={colors.accent}
+              />
+              <Text style={styles.quickActionText}>Profile</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
@@ -45,13 +244,285 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
+  contentContainer: {
+    paddingTop: Platform.OS === 'android' ? 48 : 60,
+    paddingHorizontal: 20,
+    paddingBottom: 120,
   },
-  loadingText: {
-    fontSize: 18,
+  heroSection: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  logoContainer: {
+    marginBottom: 20,
+  },
+  appTitle: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 8,
+  },
+  tagline: {
+    fontSize: 20,
+    fontWeight: '600',
     color: colors.text,
-    marginTop: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    paddingHorizontal: 20,
+  },
+  welcomeCard: {
+    backgroundColor: colors.primary,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 32,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  welcomeContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  welcomeTextContainer: {
+    flex: 1,
+  },
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.card,
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: colors.card,
+    opacity: 0.9,
+  },
+  welcomeProfileImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 3,
+    borderColor: colors.card,
+  },
+  dashboardButton: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dashboardButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginRight: 8,
+  },
+  featuresSection: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 20,
+  },
+  featuresGrid: {
+    gap: 16,
+  },
+  featureCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  featureIconContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  featureTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  featureDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  howItWorksSection: {
+    marginBottom: 32,
+  },
+  stepsContainer: {
+    gap: 16,
+  },
+  stepCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  stepNumber: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  stepNumberText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.card,
+  },
+  stepContent: {
+    flex: 1,
+  },
+  stepTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  stepDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  ctaSection: {
+    backgroundColor: colors.primary,
+    borderRadius: 20,
+    padding: 32,
+    alignItems: 'center',
+    marginBottom: 32,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  ctaTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: colors.card,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  ctaSubtitle: {
+    fontSize: 16,
+    color: colors.card,
+    opacity: 0.9,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  ctaButton: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  ctaButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginRight: 12,
+  },
+  quickActionsSection: {
+    marginBottom: 32,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  quickActionCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  quickActionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 12,
+    textAlign: 'center',
   },
 });
