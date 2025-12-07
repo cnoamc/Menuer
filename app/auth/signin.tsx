@@ -52,7 +52,7 @@ export default function SignInScreen() {
           <IconSymbol 
             ios_icon_name="person.circle" 
             android_material_icon_name="account_circle" 
-            size={60} 
+            size={40} 
             color={colors.primary}
           />
         </View>
@@ -67,7 +67,7 @@ export default function SignInScreen() {
             <IconSymbol 
               ios_icon_name="envelope" 
               android_material_icon_name="email" 
-              size={20} 
+              size={18} 
               color={colors.textSecondary}
             />
             <TextInput
@@ -89,7 +89,7 @@ export default function SignInScreen() {
             <IconSymbol 
               ios_icon_name="lock" 
               android_material_icon_name="lock" 
-              size={20} 
+              size={18} 
               color={colors.textSecondary}
             />
             <TextInput
@@ -129,18 +129,6 @@ export default function SignInScreen() {
           <Text style={styles.secondaryButtonText}>Create New Account</Text>
         </TouchableOpacity>
       </View>
-
-      <View style={styles.infoBox}>
-        <IconSymbol 
-          ios_icon_name="info.circle" 
-          android_material_icon_name="info" 
-          size={20} 
-          color={colors.accent}
-        />
-        <Text style={styles.infoText}>
-          Currently using local storage. Enable Supabase for cloud sync across devices.
-        </Text>
-      </View>
     </ScrollView>
   );
 }
@@ -162,65 +150,65 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 24,
   },
   iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: colors.highlight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textSecondary,
   },
   form: {
-    marginBottom: 30,
-  },
-  inputContainer: {
     marginBottom: 20,
   },
+  inputContainer: {
+    marginBottom: 16,
+  },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: colors.secondary,
   },
   input: {
     flex: 1,
-    height: 50,
-    fontSize: 16,
+    height: 46,
+    fontSize: 15,
     color: colors.text,
-    marginLeft: 12,
+    marginLeft: 10,
   },
   primaryButton: {
     backgroundColor: colors.primary,
     borderRadius: 12,
-    padding: 18,
+    padding: 14,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 8,
     ...Platform.select({
       ios: {
         shadowColor: colors.primary,
@@ -234,14 +222,14 @@ const styles = StyleSheet.create({
     }),
   },
   primaryButtonText: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
     color: colors.card,
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: 18,
   },
   dividerLine: {
     flex: 1,
@@ -249,35 +237,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.secondary,
   },
   dividerText: {
-    marginHorizontal: 16,
-    fontSize: 14,
+    marginHorizontal: 12,
+    fontSize: 13,
     color: colors.textSecondary,
   },
   secondaryButton: {
     backgroundColor: colors.card,
     borderRadius: 12,
-    padding: 18,
+    padding: 14,
     borderWidth: 2,
     borderColor: colors.secondary,
   },
   secondaryButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
-  },
-  infoBox: {
-    flexDirection: 'row',
-    backgroundColor: colors.highlight,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.text,
-    marginLeft: 12,
-    lineHeight: 20,
   },
 });
