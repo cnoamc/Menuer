@@ -9,6 +9,7 @@ import { useTheme } from '@react-navigation/native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMenu } from '@/contexts/MenuContext';
 import { colors } from '@/styles/commonStyles';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
   const theme = useTheme();
@@ -19,6 +20,8 @@ export default function ProfileScreen() {
   const [tempWeight, setTempWeight] = React.useState('');
   const [isEditingGoal, setIsEditingGoal] = React.useState(false);
   const [tempGoal, setTempGoal] = React.useState('');
+  const [isEditingName, setIsEditingName] = React.useState(false);
+  const [tempName, setTempName] = React.useState('');
 
   const handleSignOut = () => {
     Alert.alert(
@@ -64,6 +67,91 @@ export default function ProfileScreen() {
     await updateUserProfile({ goalWeight: goal });
     setIsEditingGoal(false);
     setTempGoal('');
+  };
+
+  const handleUpdateName = async () => {
+    if (!tempName.trim()) {
+      Alert.alert('Invalid Name', 'Please enter a valid name');
+      return;
+    }
+    await updateUserProfile({ name: tempName.trim() });
+    setIsEditingName(false);
+    setTempName('');
+  };
+
+  const handleChangeProfilePicture = () => {
+    Alert.alert(
+      'Change Profile Picture',
+      'Choose an option',
+      [
+        {
+          text: 'Take Photo',
+          onPress: handleTakePhoto,
+        },
+        {
+          text: 'Choose from Gallery',
+          onPress: handlePickImage,
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      // Request camera permissions
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Camera permission is required to take photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await updateUserProfile({ profileImage: result.assets[0].uri });
+        console.log('Profile picture updated from camera');
+      }
+    } catch (error) {
+      console.log('Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
+    }
+  };
+
+  const handlePickImage = async () => {
+    try {
+      // Request media library permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Gallery permission is required to select photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await updateUserProfile({ profileImage: result.assets[0].uri });
+        console.log('Profile picture updated from gallery');
+      }
+    } catch (error) {
+      console.log('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
   };
 
   if (!user) {
@@ -114,7 +202,7 @@ export default function ProfileScreen() {
       >
         {/* Profile Header */}
         <GlassView style={styles.profileHeader} glassEffectStyle="regular">
-          <View style={styles.profileImageContainer}>
+          <TouchableOpacity onPress={handleChangeProfilePicture} style={styles.profileImageContainer}>
             {user.profileImage ? (
               <Image 
                 source={{ uri: user.profileImage }} 
@@ -128,8 +216,63 @@ export default function ProfileScreen() {
                 color={colors.primary} 
               />
             )}
-          </View>
-          <Text style={[styles.name, { color: theme.colors.text }]}>{user.name}</Text>
+            <View style={styles.editBadge}>
+              <IconSymbol 
+                ios_icon_name="camera.fill" 
+                android_material_icon_name="camera_alt" 
+                size={16} 
+                color="#FFFFFF"
+              />
+            </View>
+          </TouchableOpacity>
+          
+          {isEditingName ? (
+            <View style={styles.nameEditContainer}>
+              <TextInput
+                style={[styles.nameInput, { color: theme.colors.text, borderBottomColor: colors.primary }]}
+                value={tempName}
+                onChangeText={setTempName}
+                placeholder={user.name}
+                placeholderTextColor={theme.dark ? '#98989D' : '#666'}
+                autoFocus
+              />
+              <View style={styles.nameEditButtons}>
+                <TouchableOpacity onPress={handleUpdateName} style={styles.iconButton}>
+                  <IconSymbol 
+                    ios_icon_name="checkmark.circle.fill" 
+                    android_material_icon_name="check_circle" 
+                    size={24} 
+                    color={colors.success}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setIsEditingName(false)} style={styles.iconButton}>
+                  <IconSymbol 
+                    ios_icon_name="xmark.circle.fill" 
+                    android_material_icon_name="cancel" 
+                    size={24} 
+                    color={colors.accent}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity 
+              onPress={() => {
+                setIsEditingName(true);
+                setTempName(user.name);
+              }}
+              style={styles.nameContainer}
+            >
+              <Text style={[styles.name, { color: theme.colors.text }]}>{user.name}</Text>
+              <IconSymbol 
+                ios_icon_name="pencil.circle" 
+                android_material_icon_name="edit" 
+                size={20} 
+                color={colors.primary}
+              />
+            </TouchableOpacity>
+          )}
+          
           <Text style={[styles.email, { color: theme.dark ? '#98989D' : '#666' }]}>{user.email}</Text>
         </GlassView>
 
@@ -366,14 +509,53 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 4,
     borderColor: colors.primary,
+    position: 'relative',
   },
   profileImageLarge: {
     width: 100,
     height: 100,
   },
+  editBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.primary,
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   name: {
     fontSize: 28,
     fontWeight: 'bold',
+  },
+  nameEditContainer: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  nameInput: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    borderBottomWidth: 2,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    minWidth: 150,
+    textAlign: 'center',
+  },
+  nameEditButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  iconButton: {
+    padding: 4,
   },
   email: {
     fontSize: 16,
