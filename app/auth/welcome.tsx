@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Alert, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -35,15 +35,13 @@ export default function WelcomeScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
-        <View style={styles.iconContainer}>
-          <IconSymbol 
-            ios_icon_name="fork.knife" 
-            android_material_icon_name="restaurant" 
-            size={70} 
-            color={colors.primary}
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('@/assets/images/987fe83e-bdb9-4f18-93d6-09f02187d391.png')}
+            style={styles.logo}
+            resizeMode="contain"
           />
         </View>
-        <Text style={styles.title}>Menuer</Text>
         <Text style={styles.subtitle}>Your Personal Menu Generator</Text>
         <Text style={styles.description}>
           Generate unlimited personalized meal plans for any diet type
@@ -181,32 +179,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  iconContainer: {
-    width: 120,
+  logoContainer: {
+    width: 280,
     height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.highlight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.2,
-        shadowRadius: 16,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
   },
-  title: {
-    fontSize: 38,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 8,
-    textAlign: 'center',
+  logo: {
+    width: '100%',
+    height: '100%',
   },
   subtitle: {
     fontSize: 18,

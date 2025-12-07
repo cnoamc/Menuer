@@ -46,14 +46,12 @@ export default function HomeScreen() {
       {/* Hero Section */}
       <View style={styles.heroSection}>
         <View style={styles.logoContainer}>
-          <IconSymbol 
-            ios_icon_name="fork.knife.circle.fill" 
-            android_material_icon_name="restaurant" 
-            size={80} 
-            color={colors.primary}
+          <Image 
+            source={require('@/assets/images/987fe83e-bdb9-4f18-93d6-09f02187d391.png')}
+            style={styles.logo}
+            resizeMode="contain"
           />
         </View>
-        <Text style={styles.appTitle}>Menuer</Text>
         <Text style={styles.tagline}>Your Personal Diet Menu Generator</Text>
         <Text style={styles.subtitle}>
           Generate unlimited personalized menus for your specific diet goals
@@ -254,13 +252,13 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   logoContainer: {
+    width: 320,
+    height: 100,
     marginBottom: 20,
   },
-  appTitle: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: colors.primary,
-    marginBottom: 8,
+  logo: {
+    width: '100%',
+    height: '100%',
   },
   tagline: {
     fontSize: 20,

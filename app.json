@@ -1,16 +1,17 @@
+
 {
   "expo": {
-    "name": "Diet Menu Generator",
-    "slug": "Diet Menu Generator",
+    "name": "Menuer",
+    "slug": "menuer",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/natively-dark.png",
+    "icon": "./assets/images/987fe83e-bdb9-4f18-93d6-09f02187d391.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/natively-dark.png",
+      "image": "./assets/images/987fe83e-bdb9-4f18-93d6-09f02187d391.png",
       "resizeMode": "contain",
-      "backgroundColor": "#4F46E5"
+      "backgroundColor": "#FFFFFF"
     },
     "ios": {
       "supportsTablet": true,
@@ -21,14 +22,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/natively-dark.png",
-        "backgroundColor": "#4F46E5"
+        "foregroundImage": "./assets/images/987fe83e-bdb9-4f18-93d6-09f02187d391.png",
+        "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.menuer.app"
     },
     "web": {
-      "favicon": "./assets/images/final_quest_240x240.png",
+      "favicon": "./assets/images/987fe83e-bdb9-4f18-93d6-09f02187d391.png",
       "bundler": "metro"
     },
     "plugins": [
@@ -44,5 +45,5 @@
       "router": {}
     }
   },
-  "scheme": "Diet Menu Generator"
+  "scheme": "menuer"
 }
