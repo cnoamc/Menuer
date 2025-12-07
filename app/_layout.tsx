@@ -44,8 +44,8 @@ function RootLayoutNav() {
 
     if (!user && !inAuthGroup && inProtectedRoute) {
       // User is not signed in and trying to access protected route
-      console.log('Redirecting to sign in - user not authenticated');
-      router.replace('/auth/signin');
+      console.log('Redirecting to welcome - user not authenticated');
+      router.replace('/auth/welcome');
     } else if (user && inAuthGroup) {
       // User is signed in but on auth screen
       console.log('Redirecting to dashboard - user already authenticated');
@@ -56,6 +56,13 @@ function RootLayoutNav() {
   return (
     <Stack>
       {/* Auth Screens - Always accessible */}
+      <Stack.Screen 
+        name="auth/welcome" 
+        options={{ 
+          headerShown: false,
+          presentation: 'card'
+        }} 
+      />
       <Stack.Screen 
         name="auth/signin" 
         options={{ 
