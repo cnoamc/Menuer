@@ -1,10 +1,14 @@
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Platform, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = SCREEN_WIDTH * 0.75;
+const CARD_SPACING = 16;
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -15,27 +19,65 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const howItWorksSteps = [
+    {
+      number: 1,
+      icon: 'fork.knife',
+      androidIcon: 'restaurant',
+      title: 'Choose Your Diet',
+      description: 'Select from various diet types including Keto, Vegan, Mediterranean, and more',
+      color: colors.primary,
+    },
+    {
+      number: 2,
+      icon: 'target',
+      androidIcon: 'flag',
+      title: 'Set Your Goals',
+      description: 'Enter your current weight and target weight to track progress',
+      color: colors.secondary,
+    },
+    {
+      number: 3,
+      icon: 'sparkles',
+      androidIcon: 'auto_awesome',
+      title: 'Generate Menus',
+      description: 'Get personalized daily meal plans with nutritional information',
+      color: colors.accent,
+    },
+    {
+      number: 4,
+      icon: 'chart.line.uptrend.xyaxis',
+      androidIcon: 'trending_up',
+      title: 'Track & Succeed',
+      description: 'Monitor your progress and achieve your health goals',
+      color: colors.primary,
+    },
+  ];
+
   const features = [
     {
       icon: 'sparkles',
       androidIcon: 'auto_awesome',
-      title: 'AI-Powered Menus',
-      description: 'Generate personalized meal plans tailored to your diet',
-      color: colors.primary,
-    },
-    {
-      icon: 'chart.line.uptrend.xyaxis',
-      androidIcon: 'trending_up',
-      title: 'Track Progress',
-      description: 'Monitor your weight and diet journey over time',
-      color: colors.secondary,
+      title: 'Unlimited Menus',
+      description: 'Generate unlimited personalized meal plans',
     },
     {
       icon: 'fork.knife',
       androidIcon: 'restaurant',
       title: 'Multiple Diets',
-      description: 'Support for Keto, Vegan, Mediterranean, and more',
-      color: colors.accent,
+      description: 'Support for various diet types',
+    },
+    {
+      icon: 'clock.arrow.circlepath',
+      androidIcon: 'history',
+      title: 'Track History',
+      description: 'Access all your previous meal plans',
+    },
+    {
+      icon: 'heart.circle',
+      androidIcon: 'favorite',
+      title: 'Health Focused',
+      description: 'Nutritionally balanced meals',
     },
   ];
 
@@ -93,32 +135,7 @@ export default function SignUpScreen() {
           />
         </View>
         <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Join us to start your healthy journey</Text>
-      </View>
-
-      {/* Features Section */}
-      <View style={styles.featuresSection}>
-        <Text style={styles.sectionTitle}>What You&apos;ll Get</Text>
-        <View style={styles.featuresGrid}>
-          {features.map((feature, index) => (
-            <React.Fragment key={index}>
-              <View style={styles.featureCard}>
-                <View style={[styles.featureIconContainer, { backgroundColor: feature.color }]}>
-                  <IconSymbol 
-                    ios_icon_name={feature.icon} 
-                    android_material_icon_name={feature.androidIcon as any} 
-                    size={28} 
-                    color={colors.card}
-                  />
-                </View>
-                <View style={styles.featureContent}>
-                  <Text style={styles.featureTitle}>{feature.title}</Text>
-                  <Text style={styles.featureDescription}>{feature.description}</Text>
-                </View>
-              </View>
-            </React.Fragment>
-          ))}
-        </View>
+        <Text style={styles.subtitle}>Generate unlimited personalized meal plans for any diet type</Text>
       </View>
 
       <View style={styles.form}>
@@ -214,7 +231,7 @@ export default function SignUpScreen() {
           {isLoading ? (
             <ActivityIndicator color={colors.card} />
           ) : (
-            <Text style={styles.primaryButtonText}>Create Account</Text>
+            <Text style={styles.primaryButtonText}>Get Started</Text>
           )}
         </TouchableOpacity>
 
@@ -228,20 +245,72 @@ export default function SignUpScreen() {
           style={styles.secondaryButton}
           onPress={() => router.push('/auth/signin')}
         >
-          <Text style={styles.secondaryButtonText}>Already have an account? Sign In</Text>
+          <Text style={styles.secondaryButtonText}>Sign In with Email</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.tertiaryButton}
+          onPress={() => router.push('/auth/signin')}
+        >
+          <Text style={styles.tertiaryButtonText}>Create New Account</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.infoBox}>
-        <IconSymbol 
-          ios_icon_name="info.circle" 
-          android_material_icon_name="info" 
-          size={20} 
-          color={colors.accent}
-        />
-        <Text style={styles.infoText}>
-          Your data is stored locally. Enable Supabase for cloud backup and multi-device sync.
-        </Text>
+      {/* How It Works Slider */}
+      <View style={styles.howItWorksSection}>
+        <Text style={styles.sectionTitle}>How It Works</Text>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={CARD_WIDTH + CARD_SPACING}
+          contentContainerStyle={styles.sliderContent}
+        >
+          {howItWorksSteps.map((step, index) => (
+            <View key={index} style={[styles.stepSlideCard, { width: CARD_WIDTH }]}>
+              <View style={[styles.stepIconContainer, { backgroundColor: step.color }]}>
+                <IconSymbol 
+                  ios_icon_name={step.icon} 
+                  android_material_icon_name={step.androidIcon as any} 
+                  size={40} 
+                  color={colors.card}
+                />
+              </View>
+              <View style={styles.stepNumberBadge}>
+                <Text style={styles.stepNumberBadgeText}>{step.number}</Text>
+              </View>
+              <Text style={styles.stepSlideTitle}>{step.title}</Text>
+              <Text style={styles.stepSlideDescription}>{step.description}</Text>
+            </View>
+          ))}
+        </ScrollView>
+        <View style={styles.dotsContainer}>
+          {howItWorksSteps.map((_, index) => (
+            <View key={index} style={styles.dot} />
+          ))}
+        </View>
+      </View>
+
+      {/* Features Grid */}
+      <View style={styles.featuresSection}>
+        <View style={styles.featuresGrid}>
+          {features.map((feature, index) => (
+            <React.Fragment key={index}>
+              <View style={styles.featureItem}>
+                <IconSymbol 
+                  ios_icon_name={feature.icon} 
+                  android_material_icon_name={feature.androidIcon as any} 
+                  size={24} 
+                  color={colors.primary}
+                />
+                <View style={styles.featureTextContainer}>
+                  <Text style={styles.featureTitle}>{feature.title}</Text>
+                  <Text style={styles.featureDescription}>{feature.description}</Text>
+                </View>
+              </View>
+            </React.Fragment>
+          ))}
+        </View>
       </View>
     </ScrollView>
   );
@@ -289,58 +358,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
     textAlign: 'center',
-  },
-  featuresSection: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 16,
-  },
-  featuresGrid: {
-    gap: 12,
-  },
-  featureCard: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-  },
-  featureIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  featureContent: {
-    flex: 1,
-  },
-  featureTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  featureDescription: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
+    paddingHorizontal: 20,
   },
   form: {
     marginBottom: 30,
@@ -409,30 +427,164 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   secondaryButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 18,
+    alignItems: 'center',
+    marginBottom: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.card,
+  },
+  tertiaryButton: {
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 18,
     borderWidth: 2,
-    borderColor: colors.secondary,
+    borderColor: colors.primary,
   },
-  secondaryButtonText: {
+  tertiaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
   },
-  infoBox: {
+  howItWorksSection: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 20,
+  },
+  sliderContent: {
+    paddingHorizontal: (SCREEN_WIDTH - CARD_WIDTH) / 2,
+    gap: CARD_SPACING,
+  },
+  stepSlideCard: {
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 320,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  stepIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  stepNumberBadge: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepNumberBadgeText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.card,
+  },
+  stepSlideTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  stepSlideDescription: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  dotsContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.highlight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.textSecondary,
+    opacity: 0.3,
+  },
+  featuresSection: {
+    marginBottom: 32,
+  },
+  featuresGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
+    width: '48%',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
-  infoText: {
+  featureTextContainer: {
     flex: 1,
-    fontSize: 14,
-    color: colors.text,
     marginLeft: 12,
-    lineHeight: 20,
+  },
+  featureTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  featureDescription: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    lineHeight: 16,
   },
 });
