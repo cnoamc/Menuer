@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { GlassView } from 'expo-glass-effect';
@@ -102,7 +101,6 @@ export default function ProfileScreen() {
 
   const handleTakePhoto = async () => {
     try {
-      // Request camera permissions
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       
       if (status !== 'granted') {
@@ -129,7 +127,6 @@ export default function ProfileScreen() {
 
   const handlePickImage = async () => {
     try {
-      // Request media library permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (status !== 'granted') {
@@ -156,7 +153,7 @@ export default function ProfileScreen() {
 
   if (!user) {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]} edges={['top']}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.notSignedInContainer}>
           <IconSymbol 
             ios_icon_name="person.circle" 
@@ -175,7 +172,7 @@ export default function ProfileScreen() {
             <Text style={styles.primaryButtonText}>Sign In</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -195,9 +192,9 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]} edges={['top']}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView
-        style={styles.container}
+        style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}
       >
         {/* Profile Header */}
@@ -453,15 +450,16 @@ export default function ProfileScreen() {
           </GlassView>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   container: {
+    flex: 1,
+    paddingTop: 60,
+  },
+  scrollView: {
     flex: 1,
   },
   contentContainer: {

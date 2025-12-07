@@ -43,7 +43,7 @@ export default function WelcomeScreen() {
             color={colors.primary}
           />
         </View>
-        <Text style={styles.title}>DietMenu Pro</Text>
+        <Text style={styles.title}>Menuer</Text>
         <Text style={styles.subtitle}>Your Personal Menu Generator</Text>
         <Text style={styles.description}>
           Generate unlimited personalized meal plans for any diet type
