@@ -15,6 +15,30 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const features = [
+    {
+      icon: 'sparkles',
+      androidIcon: 'auto_awesome',
+      title: 'AI-Powered Menus',
+      description: 'Generate personalized meal plans tailored to your diet',
+      color: colors.primary,
+    },
+    {
+      icon: 'chart.line.uptrend.xyaxis',
+      androidIcon: 'trending_up',
+      title: 'Track Progress',
+      description: 'Monitor your weight and diet journey over time',
+      color: colors.secondary,
+    },
+    {
+      icon: 'fork.knife',
+      androidIcon: 'restaurant',
+      title: 'Multiple Diets',
+      description: 'Support for Keto, Vegan, Mediterranean, and more',
+      color: colors.accent,
+    },
+  ];
+
   const handleSignUp = async () => {
     if (!name || !email || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
@@ -70,6 +94,31 @@ export default function SignUpScreen() {
         </View>
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Join us to start your healthy journey</Text>
+      </View>
+
+      {/* Features Section */}
+      <View style={styles.featuresSection}>
+        <Text style={styles.sectionTitle}>What You&apos;ll Get</Text>
+        <View style={styles.featuresGrid}>
+          {features.map((feature, index) => (
+            <React.Fragment key={index}>
+              <View style={styles.featureCard}>
+                <View style={[styles.featureIconContainer, { backgroundColor: feature.color }]}>
+                  <IconSymbol 
+                    ios_icon_name={feature.icon} 
+                    android_material_icon_name={feature.androidIcon as any} 
+                    size={28} 
+                    color={colors.card}
+                  />
+                </View>
+                <View style={styles.featureContent}>
+                  <Text style={styles.featureTitle}>{feature.title}</Text>
+                  <Text style={styles.featureDescription}>{feature.description}</Text>
+                </View>
+              </View>
+            </React.Fragment>
+          ))}
+        </View>
       </View>
 
       <View style={styles.form}>
@@ -219,7 +268,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 32,
   },
   iconContainer: {
     width: 100,
@@ -240,6 +289,58 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  featuresSection: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  featuresGrid: {
+    gap: 12,
+  },
+  featureCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  featureIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  featureContent: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  featureDescription: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
   form: {
     marginBottom: 30,

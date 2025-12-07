@@ -88,28 +88,30 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Features Section */}
-      <View style={styles.featuresSection}>
-        <Text style={styles.sectionTitle}>Features</Text>
-        <View style={styles.featuresGrid}>
-          {features.map((feature, index) => (
-            <React.Fragment key={index}>
-              <View style={styles.featureCard}>
-                <View style={[styles.featureIconContainer, { backgroundColor: feature.color }]}>
-                  <IconSymbol 
-                    ios_icon_name={feature.icon} 
-                    android_material_icon_name={feature.androidIcon as any} 
-                    size={32} 
-                    color={colors.card}
-                  />
+      {/* Features Section - Only show when user is NOT logged in */}
+      {!user && (
+        <View style={styles.featuresSection}>
+          <Text style={styles.sectionTitle}>Features</Text>
+          <View style={styles.featuresGrid}>
+            {features.map((feature, index) => (
+              <React.Fragment key={index}>
+                <View style={styles.featureCard}>
+                  <View style={[styles.featureIconContainer, { backgroundColor: feature.color }]}>
+                    <IconSymbol 
+                      ios_icon_name={feature.icon} 
+                      android_material_icon_name={feature.androidIcon as any} 
+                      size={32} 
+                      color={colors.card}
+                    />
+                  </View>
+                  <Text style={styles.featureTitle}>{feature.title}</Text>
+                  <Text style={styles.featureDescription}>{feature.description}</Text>
                 </View>
-                <Text style={styles.featureTitle}>{feature.title}</Text>
-                <Text style={styles.featureDescription}>{feature.description}</Text>
-              </View>
-            </React.Fragment>
-          ))}
+              </React.Fragment>
+            ))}
+          </View>
         </View>
-      </View>
+      )}
 
       {/* How It Works Section */}
       <View style={styles.howItWorksSection}>
