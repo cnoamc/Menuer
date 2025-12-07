@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -33,11 +33,13 @@ export default function SignUpScreen() {
 
     setIsLoading(true);
     try {
-      await signUp(email, password, name);
+      console.log('Attempting sign up with:', { name, email });
+      await signUp(name, email, password);
+      console.log('Sign up successful, navigating to dashboard');
       router.replace('/(tabs)/dashboard');
     } catch (error) {
-      Alert.alert('Error', 'Failed to create account. Please try again.');
       console.log('Sign up error:', error);
+      Alert.alert('Error', 'Failed to create account. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -202,7 +204,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   contentContainer: {
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'android' ? 48 : 60,
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
@@ -273,8 +275,17 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: 'center',
     marginTop: 10,
-    boxShadow: '0px 4px 12px rgba(143, 188, 143, 0.3)',
-    elevation: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   primaryButtonText: {
     fontSize: 18,

@@ -12,7 +12,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadUser = async () => {
     try {
       const userData = await AsyncStorage.getItem('user');
+      console.log('Loading user from storage:', userData);
       if (userData) {
         setUser(JSON.parse(userData));
       }
@@ -41,32 +42,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Simulate API call - In production, this would call Supabase
-      const mockUser = {
-        id: '1',
-        email,
-        name: email.split('@')[0],
-      };
+      console.log('Signing in with email:', email);
       
-      await AsyncStorage.setItem('user', JSON.stringify(mockUser));
-      setUser(mockUser);
+      // Check if user exists in storage
+      const usersData = await AsyncStorage.getItem('users');
+      const users = usersData ? JSON.parse(usersData) : {};
+      
+      if (users[email] && users[email].password === password) {
+        // User exists and password matches
+        const mockUser = {
+          id: users[email].id,
+          email,
+          name: users[email].name,
+        };
+        
+        await AsyncStorage.setItem('user', JSON.stringify(mockUser));
+        setUser(mockUser);
+        console.log('Sign in successful');
+      } else {
+        // For demo purposes, allow any email/password combination
+        const mockUser = {
+          id: Date.now().toString(),
+          email,
+          name: email.split('@')[0],
+        };
+        
+        await AsyncStorage.setItem('user', JSON.stringify(mockUser));
+        setUser(mockUser);
+        console.log('Sign in successful (demo mode)');
+      }
     } catch (error) {
       console.log('Error signing in:', error);
       throw error;
     }
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (name: string, email: string, password: string) => {
     try {
-      // Simulate API call - In production, this would call Supabase
+      console.log('Signing up with name:', name, 'email:', email);
+      
+      // Store user credentials
+      const usersData = await AsyncStorage.getItem('users');
+      const users = usersData ? JSON.parse(usersData) : {};
+      
+      const userId = Date.now().toString();
+      users[email] = {
+        id: userId,
+        name,
+        password,
+      };
+      
+      await AsyncStorage.setItem('users', JSON.stringify(users));
+      
+      // Create user session
       const mockUser = {
-        id: Date.now().toString(),
+        id: userId,
         email,
         name,
       };
       
       await AsyncStorage.setItem('user', JSON.stringify(mockUser));
       setUser(mockUser);
+      console.log('Sign up successful');
     } catch (error) {
       console.log('Error signing up:', error);
       throw error;
@@ -75,6 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log('Signing out');
       await AsyncStorage.removeItem('user');
       setUser(null);
     } catch (error) {
