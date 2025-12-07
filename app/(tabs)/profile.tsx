@@ -22,8 +22,15 @@ export default function ProfileScreen() {
           text: 'Sign Out', 
           style: 'destructive',
           onPress: async () => {
-            await signOut();
-            router.replace('/(tabs)/(home)/');
+            console.log('User confirmed sign out');
+            try {
+              await signOut();
+              console.log('Sign out successful, redirecting to welcome');
+              router.replace('/auth/welcome');
+            } catch (error) {
+              console.log('Error during sign out:', error);
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            }
           }
         },
       ]

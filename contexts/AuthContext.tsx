@@ -112,9 +112,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      console.log('Signing out');
+      console.log('Starting sign out process...');
+      
+      // Clear user session from AsyncStorage
       await AsyncStorage.removeItem('user');
+      console.log('User session cleared from AsyncStorage');
+      
+      // Clear user state
       setUser(null);
+      console.log('User state cleared, sign out complete');
     } catch (error) {
       console.log('Error signing out:', error);
       throw error;
