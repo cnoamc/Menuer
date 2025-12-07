@@ -70,21 +70,55 @@ export default function DashboardScreen() {
 
   // Calculate days since diet started
   const getDaysSinceDietStarted = () => {
-    if (!user.dietStartDate) return 0;
-    const startDate = new Date(user.dietStartDate);
+    if (!user.surveyCompletedAt) return 0;
+    const startDate = new Date(user.surveyCompletedAt);
     const today = new Date();
     const diffTime = Math.abs(today.getTime() - startDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
 
-  // Calculate weight progress
+  // Calculate weight progress based on actual logged data
   const getWeightProgress = () => {
-    if (!user.currentWeight || !user.goalWeight) return 0;
-    const startWeight = user.currentWeight + 5; // Assume started 5kg heavier
-    const totalToLose = startWeight - user.goalWeight;
-    const lost = startWeight - user.currentWeight;
-    return Math.min((lost / totalToLose) * 100, 100);
+    // Use initialWeight from survey, or fall back to weight field
+    const startWeight = user.initialWeight || user.weight || user.currentWeight || 0;
+    const currentWeight = user.currentWeight || user.weight || 0;
+    const goalWeight = user.goalWeight || 0;
+
+    console.log('Weight Progress Calculation:', {
+      startWeight,
+      currentWeight,
+      goalWeight,
+      user: {
+        initialWeight: user.initialWeight,
+        weight: user.weight,
+        currentWeight: user.currentWeight,
+        goalWeight: user.goalWeight,
+      }
+    });
+
+    // If we don't have valid data, return 0
+    if (!startWeight || !goalWeight || startWeight === goalWeight) {
+      return 0;
+    }
+
+    // Calculate total weight to lose/gain
+    const totalChange = startWeight - goalWeight;
+    
+    // Calculate weight already lost/gained
+    const currentChange = startWeight - currentWeight;
+    
+    // Calculate percentage (ensure it's between 0 and 100)
+    const percentage = Math.max(0, Math.min(100, (currentChange / totalChange) * 100));
+    
+    return percentage;
+  };
+
+  // Calculate weight remaining to goal
+  const getWeightToGo = () => {
+    const currentWeight = user.currentWeight || user.weight || 0;
+    const goalWeight = user.goalWeight || 0;
+    return Math.max(0, Math.abs(currentWeight - goalWeight));
   };
 
   const todayMenus = menus.filter(menu => {
@@ -96,6 +130,9 @@ export default function DashboardScreen() {
   const userName = user.name || 'User';
   const daysSinceDietStarted = getDaysSinceDietStarted();
   const weightProgress = getWeightProgress();
+  const weightToGo = getWeightToGo();
+  const currentWeight = user.currentWeight || user.weight || 0;
+  const goalWeight = user.goalWeight || 0;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -180,19 +217,17 @@ export default function DashboardScreen() {
           <View style={styles.weightStats}>
             <View style={styles.weightStatItem}>
               <Text style={styles.weightStatLabel}>Current</Text>
-              <Text style={styles.weightStatValue}>{user.currentWeight || 0} kg</Text>
+              <Text style={styles.weightStatValue}>{currentWeight.toFixed(1)} kg</Text>
             </View>
             <View style={styles.weightStatDivider} />
             <View style={styles.weightStatItem}>
               <Text style={styles.weightStatLabel}>Goal</Text>
-              <Text style={styles.weightStatValue}>{user.goalWeight || 0} kg</Text>
+              <Text style={styles.weightStatValue}>{goalWeight.toFixed(1)} kg</Text>
             </View>
             <View style={styles.weightStatDivider} />
             <View style={styles.weightStatItem}>
               <Text style={styles.weightStatLabel}>To Go</Text>
-              <Text style={styles.weightStatValue}>
-                {Math.max((user.currentWeight || 0) - (user.goalWeight || 0), 0).toFixed(1)} kg
-              </Text>
+              <Text style={styles.weightStatValue}>{weightToGo.toFixed(1)} kg</Text>
             </View>
           </View>
 

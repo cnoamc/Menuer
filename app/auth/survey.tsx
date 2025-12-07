@@ -20,11 +20,12 @@ export default function SurveyScreen() {
   const [age, setAge] = useState('');
   const [height, setHeight] = useState('');
   const [goals, setGoals] = useState('');
+  const [goalWeight, setGoalWeight] = useState('');
   const [endDate, setEndDate] = useState(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)); // 90 days from now
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDiet, setSelectedDiet] = useState<typeof dietTypes[0] | null>(null);
 
-  const totalSteps = 6;
+  const totalSteps = 7;
 
   React.useEffect(() => {
     logAuth('SURVEY_STARTED', `User ${user?.name} started onboarding survey`, { userId: user?.id }, user?.id, user?.name);
@@ -33,22 +34,26 @@ export default function SurveyScreen() {
   const handleNext = () => {
     // Validate current step
     if (currentStep === 1 && !weight) {
-      Alert.alert('Required', 'Please enter your weight');
+      Alert.alert('Required', 'Please enter your current weight');
       return;
     }
-    if (currentStep === 2 && !age) {
+    if (currentStep === 2 && !goalWeight) {
+      Alert.alert('Required', 'Please enter your goal weight');
+      return;
+    }
+    if (currentStep === 3 && !age) {
       Alert.alert('Required', 'Please enter your age');
       return;
     }
-    if (currentStep === 3 && !height) {
+    if (currentStep === 4 && !height) {
       Alert.alert('Required', 'Please enter your height');
       return;
     }
-    if (currentStep === 4 && !goals) {
+    if (currentStep === 5 && !goals) {
       Alert.alert('Required', 'Please enter your goals');
       return;
     }
-    if (currentStep === 6 && !selectedDiet) {
+    if (currentStep === 7 && !selectedDiet) {
       Alert.alert('Required', 'Please select a diet');
       return;
     }
@@ -73,8 +78,14 @@ export default function SurveyScreen() {
 
     setIsLoading(true);
     try {
+      const parsedWeight = parseFloat(weight);
+      const parsedGoalWeight = parseFloat(goalWeight);
+      
       const surveyData = {
-        weight: parseFloat(weight),
+        initialWeight: parsedWeight, // Store the starting weight
+        weight: parsedWeight, // Also store in weight field for compatibility
+        currentWeight: parsedWeight, // Set current weight to initial weight
+        goalWeight: parsedGoalWeight,
         age: parseInt(age),
         height: parseFloat(height),
         goals,
@@ -95,7 +106,8 @@ export default function SurveyScreen() {
       }, user?.id, user?.name);
 
       // Log individual survey responses for detailed tracking
-      await logProfile('WEIGHT_RECORDED', `Weight: ${weight} kg`, { weight: parseFloat(weight), userId: user?.id }, user?.id, user?.name);
+      await logProfile('INITIAL_WEIGHT_RECORDED', `Initial weight: ${weight} kg`, { initialWeight: parsedWeight, userId: user?.id }, user?.id, user?.name);
+      await logProfile('GOAL_WEIGHT_RECORDED', `Goal weight: ${goalWeight} kg`, { goalWeight: parsedGoalWeight, userId: user?.id }, user?.id, user?.name);
       await logProfile('AGE_RECORDED', `Age: ${age} years`, { age: parseInt(age), userId: user?.id }, user?.id, user?.name);
       await logProfile('HEIGHT_RECORDED', `Height: ${height} cm`, { height: parseFloat(height), userId: user?.id }, user?.id, user?.name);
       await logProfile('GOALS_RECORDED', `Goals: ${goals}`, { goals, userId: user?.id }, user?.id, user?.name);
@@ -144,12 +156,12 @@ export default function SurveyScreen() {
                 color={colors.primary}
               />
             </View>
-            <Text style={styles.stepTitle}>What&apos;s your weight?</Text>
-            <Text style={styles.stepSubtitle}>This helps us create a personalized meal plan</Text>
+            <Text style={styles.stepTitle}>What&apos;s your current weight?</Text>
+            <Text style={styles.stepSubtitle}>This is your starting point for tracking progress</Text>
             <View style={styles.inputWrapper}>
               <TextInput
                 style={styles.input}
-                placeholder="Enter weight"
+                placeholder="Enter current weight"
                 placeholderTextColor={colors.textSecondary}
                 value={weight}
                 onChangeText={setWeight}
@@ -161,6 +173,33 @@ export default function SurveyScreen() {
         );
 
       case 2:
+        return (
+          <View style={styles.stepContainer}>
+            <View style={styles.iconContainer}>
+              <IconSymbol 
+                ios_icon_name="target" 
+                android_material_icon_name="flag" 
+                size={60} 
+                color={colors.primary}
+              />
+            </View>
+            <Text style={styles.stepTitle}>What&apos;s your goal weight?</Text>
+            <Text style={styles.stepSubtitle}>Set a realistic target weight you want to achieve</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter goal weight"
+                placeholderTextColor={colors.textSecondary}
+                value={goalWeight}
+                onChangeText={setGoalWeight}
+                keyboardType="decimal-pad"
+              />
+              <Text style={styles.inputUnit}>kg</Text>
+            </View>
+          </View>
+        );
+
+      case 3:
         return (
           <View style={styles.stepContainer}>
             <View style={styles.iconContainer}>
@@ -187,7 +226,7 @@ export default function SurveyScreen() {
           </View>
         );
 
-      case 3:
+      case 4:
         return (
           <View style={styles.stepContainer}>
             <View style={styles.iconContainer}>
@@ -214,13 +253,13 @@ export default function SurveyScreen() {
           </View>
         );
 
-      case 4:
+      case 5:
         return (
           <View style={styles.stepContainer}>
             <View style={styles.iconContainer}>
               <IconSymbol 
-                ios_icon_name="target" 
-                android_material_icon_name="flag" 
+                ios_icon_name="star" 
+                android_material_icon_name="star" 
                 size={60} 
                 color={colors.primary}
               />
@@ -229,7 +268,7 @@ export default function SurveyScreen() {
             <Text style={styles.stepSubtitle}>Tell us what you want to achieve</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="E.g., Lose 10kg, build muscle, eat healthier..."
+              placeholder="E.g., Lose weight, build muscle, eat healthier..."
               placeholderTextColor={colors.textSecondary}
               value={goals}
               onChangeText={setGoals}
@@ -240,7 +279,7 @@ export default function SurveyScreen() {
           </View>
         );
 
-      case 5:
+      case 6:
         return (
           <View style={styles.stepContainer}>
             <View style={styles.iconContainer}>
@@ -288,7 +327,7 @@ export default function SurveyScreen() {
           </View>
         );
 
-      case 6:
+      case 7:
         return (
           <View style={styles.stepContainer}>
             <View style={styles.iconContainer}>

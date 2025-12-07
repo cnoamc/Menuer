@@ -9,9 +9,10 @@ interface User {
   name: string;
   profileImage?: string;
   dietStartDate?: string;
-  currentWeight?: number;
+  initialWeight?: number; // Weight when starting the diet
+  currentWeight?: number; // Current weight (can be updated)
   goalWeight?: number;
-  weight?: number;
+  weight?: number; // Legacy field for compatibility
   age?: number;
   height?: number;
   goals?: string;
@@ -84,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: users[email].name,
           profileImage: users[email].profileImage,
           dietStartDate: users[email].dietStartDate,
+          initialWeight: users[email].initialWeight,
           currentWeight: users[email].currentWeight,
           goalWeight: users[email].goalWeight,
           weight: users[email].weight,
@@ -108,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: email.split('@')[0],
           profileImage: randomImage,
           dietStartDate: new Date().toISOString(),
+          initialWeight: 75,
           currentWeight: 75,
           goalWeight: 70,
         };
@@ -142,6 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
         profileImage: randomImage,
         dietStartDate: new Date().toISOString(),
+        initialWeight: 75,
         currentWeight: 75,
         goalWeight: 70,
       };
@@ -155,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name,
         profileImage: randomImage,
         dietStartDate: new Date().toISOString(),
+        initialWeight: 75,
         currentWeight: 75,
         goalWeight: 70,
       };
