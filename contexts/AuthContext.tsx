@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logAuth } from '@/utils/activityLogger';
 
 interface User {
   id: string;
@@ -45,10 +46,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = await AsyncStorage.getItem('user');
       console.log('Loading user from storage:', userData);
       if (userData) {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        await logAuth('USER_LOADED', 'User session restored from storage', { userId: parsedUser.id, email: parsedUser.email }, parsedUser.id, parsedUser.name);
+      } else {
+        await logAuth('NO_USER_SESSION', 'No existing user session found');
       }
     } catch (error) {
       console.log('Error loading user:', error);
+      await logAuth('USER_LOAD_ERROR', 'Failed to load user session', { error: String(error) });
     } finally {
       setIsLoading(false);
     }
@@ -57,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       console.log('Signing in with email:', email);
+      await logAuth('SIGN_IN_ATTEMPT', `User attempting to sign in with email: ${email}`, { email });
       
       // Check if user exists in storage
       const usersData = await AsyncStorage.getItem('users');
@@ -77,6 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await AsyncStorage.setItem('user', JSON.stringify(mockUser));
         setUser(mockUser);
         console.log('Sign in successful');
+        await logAuth('SIGN_IN_SUCCESS', `User signed in successfully: ${mockUser.name}`, { userId: mockUser.id, email: mockUser.email }, mockUser.id, mockUser.name);
       } else {
         // For demo purposes, allow any email/password combination
         const randomImage = profileImages[Math.floor(Math.random() * profileImages.length)];
@@ -93,9 +101,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await AsyncStorage.setItem('user', JSON.stringify(mockUser));
         setUser(mockUser);
         console.log('Sign in successful (demo mode)');
+        await logAuth('SIGN_IN_SUCCESS_DEMO', `User signed in (demo mode): ${mockUser.name}`, { userId: mockUser.id, email: mockUser.email }, mockUser.id, mockUser.name);
       }
     } catch (error) {
       console.log('Error signing in:', error);
+      await logAuth('SIGN_IN_ERROR', `Sign in failed for email: ${email}`, { email, error: String(error) });
       throw error;
     }
   };
@@ -103,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (name: string, email: string, password: string) => {
     try {
       console.log('Signing up with name:', name, 'email:', email);
+      await logAuth('SIGN_UP_ATTEMPT', `New user attempting to sign up: ${name} (${email})`, { name, email });
       
       // Store user credentials
       const usersData = await AsyncStorage.getItem('users');
@@ -137,8 +148,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.setItem('user', JSON.stringify(mockUser));
       setUser(mockUser);
       console.log('Sign up successful');
+      await logAuth('SIGN_UP_SUCCESS', `New user account created: ${name}`, { userId, email, name }, userId, name);
     } catch (error) {
       console.log('Error signing up:', error);
+      await logAuth('SIGN_UP_ERROR', `Sign up failed for: ${name} (${email})`, { name, email, error: String(error) });
       throw error;
     }
   };
@@ -146,6 +159,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       console.log('Starting sign out process...');
+      const currentUser = user;
+      
+      await logAuth('SIGN_OUT_ATTEMPT', `User attempting to sign out: ${currentUser?.name}`, { userId: currentUser?.id, email: currentUser?.email }, currentUser?.id, currentUser?.name);
       
       // Clear user session from AsyncStorage first
       await AsyncStorage.removeItem('user');
@@ -155,9 +171,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       console.log('User state set to null - sign out complete');
       
+      await logAuth('SIGN_OUT_SUCCESS', `User signed out successfully: ${currentUser?.name}`, { userId: currentUser?.id, email: currentUser?.email });
+      
       // The navigation will be handled automatically by the useEffect in _layout.tsx
     } catch (error) {
       console.log('Error signing out:', error);
+      await logAuth('SIGN_OUT_ERROR', 'Sign out failed', { error: String(error), userId: user?.id }, user?.id, user?.name);
       throw error;
     }
   };
@@ -165,6 +184,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateUserProfile = async (updates: Partial<User>) => {
     try {
       if (!user) return;
+      
+      console.log('Updating user profile:', updates);
+      await logAuth('PROFILE_UPDATE_ATTEMPT', `User attempting to update profile: ${user.name}`, { userId: user.id, updates }, user.id, user.name);
       
       const updatedUser = { ...user, ...updates };
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
@@ -179,8 +201,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       setUser(updatedUser);
       console.log('User profile updated');
+      
+      // Log specific update details
+      const updateDetails = Object.keys(updates).map(key => `${key}: ${JSON.stringify(updates[key as keyof User])}`).join(', ');
+      await logAuth('PROFILE_UPDATE_SUCCESS', `Profile updated for ${user.name}: ${updateDetails}`, { userId: user.id, updates }, user.id, user.name);
     } catch (error) {
       console.log('Error updating user profile:', error);
+      await logAuth('PROFILE_UPDATE_ERROR', `Profile update failed for ${user?.name}`, { userId: user?.id, updates, error: String(error) }, user?.id, user?.name);
       throw error;
     }
   };

@@ -7,6 +7,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMenu } from '@/contexts/MenuContext';
 import * as ImagePicker from 'expo-image-picker';
+import { logProfile, logNavigation } from '@/utils/activityLogger';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -18,6 +19,10 @@ export default function ProfileScreen() {
   const [tempGoal, setTempGoal] = React.useState('');
   const [isEditingName, setIsEditingName] = React.useState(false);
   const [tempName, setTempName] = React.useState('');
+
+  React.useEffect(() => {
+    logNavigation('SCREEN_VIEW', 'User viewed Profile screen', { userId: user?.id }, user?.id, user?.name);
+  }, []);
 
   const handleSignOut = () => {
     Alert.alert(
@@ -49,6 +54,10 @@ export default function ProfileScreen() {
       Alert.alert('Invalid Weight', 'Please enter a valid weight');
       return;
     }
+    
+    const oldWeight = user?.currentWeight;
+    await logProfile('WEIGHT_UPDATE', `User updating weight from ${oldWeight}kg to ${weight}kg`, { oldWeight, newWeight: weight }, user?.id, user?.name);
+    
     await updateUserProfile({ currentWeight: weight });
     setIsEditingWeight(false);
     setTempWeight('');
@@ -60,6 +69,10 @@ export default function ProfileScreen() {
       Alert.alert('Invalid Goal', 'Please enter a valid goal weight');
       return;
     }
+    
+    const oldGoal = user?.goalWeight;
+    await logProfile('GOAL_WEIGHT_UPDATE', `User updating goal weight from ${oldGoal}kg to ${goal}kg`, { oldGoal, newGoal: goal }, user?.id, user?.name);
+    
     await updateUserProfile({ goalWeight: goal });
     setIsEditingGoal(false);
     setTempGoal('');
@@ -70,12 +83,18 @@ export default function ProfileScreen() {
       Alert.alert('Invalid Name', 'Please enter a valid name');
       return;
     }
+    
+    const oldName = user?.name;
+    await logProfile('NAME_UPDATE', `User updating name from "${oldName}" to "${tempName.trim()}"`, { oldName, newName: tempName.trim() }, user?.id, user?.name);
+    
     await updateUserProfile({ name: tempName.trim() });
     setIsEditingName(false);
     setTempName('');
   };
 
   const handleChangeProfilePicture = () => {
+    logProfile('PROFILE_PICTURE_CHANGE_INITIATED', 'User initiated profile picture change', {}, user?.id, user?.name);
+    
     Alert.alert(
       'Change Profile Picture',
       'Choose an option',
@@ -91,6 +110,7 @@ export default function ProfileScreen() {
         {
           text: 'Cancel',
           style: 'cancel',
+          onPress: () => logProfile('PROFILE_PICTURE_CHANGE_CANCELLED', 'User cancelled profile picture change', {}, user?.id, user?.name),
         },
       ]
     );
@@ -98,13 +118,19 @@ export default function ProfileScreen() {
 
   const handleTakePhoto = async () => {
     try {
+      await logProfile('CAMERA_PERMISSION_REQUEST', 'Requesting camera permission', {}, user?.id, user?.name);
+      
       // Request camera permissions
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       
       if (status !== 'granted') {
+        await logProfile('CAMERA_PERMISSION_DENIED', 'Camera permission denied by user', {}, user?.id, user?.name);
         Alert.alert('Permission Denied', 'Camera permission is required to take photos.');
         return;
       }
+
+      await logProfile('CAMERA_PERMISSION_GRANTED', 'Camera permission granted', {}, user?.id, user?.name);
+      await logProfile('CAMERA_LAUNCHED', 'User launched camera to take photo', {}, user?.id, user?.name);
 
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
@@ -114,24 +140,34 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
+        await logProfile('PROFILE_PICTURE_CAPTURED', 'User captured photo from camera', { imageUri: result.assets[0].uri }, user?.id, user?.name);
         await updateUserProfile({ profileImage: result.assets[0].uri });
         console.log('Profile picture updated from camera');
+      } else {
+        await logProfile('CAMERA_CANCELLED', 'User cancelled camera without taking photo', {}, user?.id, user?.name);
       }
     } catch (error) {
       console.log('Error taking photo:', error);
+      await logProfile('CAMERA_ERROR', 'Error occurred while taking photo', { error: String(error) }, user?.id, user?.name);
       Alert.alert('Error', 'Failed to take photo. Please try again.');
     }
   };
 
   const handlePickImage = async () => {
     try {
+      await logProfile('GALLERY_PERMISSION_REQUEST', 'Requesting gallery permission', {}, user?.id, user?.name);
+      
       // Request media library permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (status !== 'granted') {
+        await logProfile('GALLERY_PERMISSION_DENIED', 'Gallery permission denied by user', {}, user?.id, user?.name);
         Alert.alert('Permission Denied', 'Gallery permission is required to select photos.');
         return;
       }
+
+      await logProfile('GALLERY_PERMISSION_GRANTED', 'Gallery permission granted', {}, user?.id, user?.name);
+      await logProfile('GALLERY_OPENED', 'User opened gallery to select photo', {}, user?.id, user?.name);
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
@@ -141,11 +177,15 @@ export default function ProfileScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
+        await logProfile('PROFILE_PICTURE_SELECTED', 'User selected photo from gallery', { imageUri: result.assets[0].uri }, user?.id, user?.name);
         await updateUserProfile({ profileImage: result.assets[0].uri });
         console.log('Profile picture updated from gallery');
+      } else {
+        await logProfile('GALLERY_CANCELLED', 'User cancelled gallery without selecting photo', {}, user?.id, user?.name);
       }
     } catch (error) {
       console.log('Error picking image:', error);
+      await logProfile('GALLERY_ERROR', 'Error occurred while picking image', { error: String(error) }, user?.id, user?.name);
       Alert.alert('Error', 'Failed to pick image. Please try again.');
     }
   };
@@ -166,7 +206,10 @@ export default function ProfileScreen() {
           </Text>
           <TouchableOpacity 
             style={styles.primaryButton}
-            onPress={() => router.push('/auth/signin')}
+            onPress={() => {
+              logNavigation('NAVIGATION', 'User navigating to Sign In from Profile', { from: 'profile', to: 'signin' });
+              router.push('/auth/signin');
+            }}
           >
             <Text style={styles.primaryButtonText}>Sign In</Text>
           </TouchableOpacity>
@@ -180,13 +223,19 @@ export default function ProfileScreen() {
       icon: 'restaurant',
       title: 'Current Diet',
       value: currentDiet ? currentDiet.name : 'Not selected',
-      onPress: () => router.push('/diet/select'),
+      onPress: () => {
+        logNavigation('NAVIGATION', 'User navigating to Diet Selection from Profile', { from: 'profile', to: 'diet-select' }, user?.id, user?.name);
+        router.push('/diet/select');
+      },
     },
     {
       icon: 'history',
       title: 'Menu History',
       value: `${menus.length} menus`,
-      onPress: () => router.push('/menus/history'),
+      onPress: () => {
+        logNavigation('NAVIGATION', 'User navigating to Menu History from Profile', { from: 'profile', to: 'menu-history', menuCount: menus.length }, user?.id, user?.name);
+        router.push('/menus/history');
+      },
     },
   ];
 
@@ -237,7 +286,13 @@ export default function ProfileScreen() {
                   color={colors.success}
                 />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setIsEditingName(false)} style={styles.iconButton}>
+              <TouchableOpacity 
+                onPress={() => {
+                  logProfile('NAME_EDIT_CANCELLED', 'User cancelled name edit', {}, user?.id, user?.name);
+                  setIsEditingName(false);
+                }} 
+                style={styles.iconButton}
+              >
                 <IconSymbol 
                   ios_icon_name="xmark.circle.fill" 
                   android_material_icon_name="cancel" 
@@ -250,6 +305,7 @@ export default function ProfileScreen() {
         ) : (
           <TouchableOpacity 
             onPress={() => {
+              logProfile('NAME_EDIT_STARTED', 'User started editing name', {}, user?.id, user?.name);
               setIsEditingName(true);
               setTempName(user.name);
             }}
@@ -293,7 +349,13 @@ export default function ProfileScreen() {
                     color={colors.success}
                   />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setIsEditingWeight(false)} style={styles.cancelButton}>
+                <TouchableOpacity 
+                  onPress={() => {
+                    logProfile('WEIGHT_EDIT_CANCELLED', 'User cancelled weight edit', {}, user?.id, user?.name);
+                    setIsEditingWeight(false);
+                  }} 
+                  style={styles.cancelButton}
+                >
                   <IconSymbol 
                     ios_icon_name="xmark.circle.fill" 
                     android_material_icon_name="cancel" 
@@ -305,6 +367,7 @@ export default function ProfileScreen() {
             ) : (
               <TouchableOpacity 
                 onPress={() => {
+                  logProfile('WEIGHT_EDIT_STARTED', 'User started editing current weight', { currentWeight: user.currentWeight }, user?.id, user?.name);
                   setIsEditingWeight(true);
                   setTempWeight(user.currentWeight?.toString() || '');
                 }}
@@ -343,7 +406,13 @@ export default function ProfileScreen() {
                     color={colors.success}
                   />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setIsEditingGoal(false)} style={styles.cancelButton}>
+                <TouchableOpacity 
+                  onPress={() => {
+                    logProfile('GOAL_EDIT_CANCELLED', 'User cancelled goal weight edit', {}, user?.id, user?.name);
+                    setIsEditingGoal(false);
+                  }} 
+                  style={styles.cancelButton}
+                >
                   <IconSymbol 
                     ios_icon_name="xmark.circle.fill" 
                     android_material_icon_name="cancel" 
@@ -355,6 +424,7 @@ export default function ProfileScreen() {
             ) : (
               <TouchableOpacity 
                 onPress={() => {
+                  logProfile('GOAL_EDIT_STARTED', 'User started editing goal weight', { goalWeight: user.goalWeight }, user?.id, user?.name);
                   setIsEditingGoal(true);
                   setTempGoal(user.goalWeight?.toString() || '');
                 }}

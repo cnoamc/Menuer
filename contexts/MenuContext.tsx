@@ -2,6 +2,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Menu, DietType } from '@/types/diet';
+import { logMenu, logDiet } from '@/utils/activityLogger';
+import { useAuth } from './AuthContext';
 
 interface MenuContextType {
   menus: Menu[];
@@ -29,13 +31,18 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
       const dietData = await AsyncStorage.getItem('currentDiet');
       
       if (menusData) {
-        setMenus(JSON.parse(menusData));
+        const parsedMenus = JSON.parse(menusData);
+        setMenus(parsedMenus);
+        await logMenu('MENUS_LOADED', `Loaded ${parsedMenus.length} menus from storage`, { count: parsedMenus.length });
       }
       if (dietData) {
-        setCurrentDietState(JSON.parse(dietData));
+        const parsedDiet = JSON.parse(dietData);
+        setCurrentDietState(parsedDiet);
+        await logDiet('DIET_LOADED', `Current diet loaded: ${parsedDiet.name}`, { dietId: parsedDiet.id, dietName: parsedDiet.name });
       }
     } catch (error) {
       console.log('Error loading data:', error);
+      await logMenu('MENU_LOAD_ERROR', 'Failed to load menus or diet data', { error: String(error) });
     } finally {
       setIsLoading(false);
     }
@@ -43,15 +50,24 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
 
   const setCurrentDiet = async (diet: DietType) => {
     try {
+      console.log('Setting current diet:', diet.name);
+      await logDiet('DIET_CHANGE_ATTEMPT', `User attempting to change diet to: ${diet.name}`, { dietId: diet.id, dietName: diet.name });
+      
       await AsyncStorage.setItem('currentDiet', JSON.stringify(diet));
       setCurrentDietState(diet);
+      
+      await logDiet('DIET_CHANGE_SUCCESS', `Diet changed successfully to: ${diet.name}`, { dietId: diet.id, dietName: diet.name, description: diet.description });
     } catch (error) {
       console.log('Error setting diet:', error);
+      await logDiet('DIET_CHANGE_ERROR', `Failed to change diet to: ${diet.name}`, { dietId: diet.id, error: String(error) });
     }
   };
 
   const generateMenu = async (): Promise<Menu> => {
     try {
+      console.log('Generating new menu for diet:', currentDiet?.name);
+      await logMenu('MENU_GENERATION_START', `Starting menu generation for diet: ${currentDiet?.name || 'General'}`, { dietType: currentDiet?.name });
+      
       // Generate a mock menu - In production, this could call an AI API
       const newMenu: Menu = {
         id: Date.now().toString(),
@@ -106,20 +122,36 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.setItem('menus', JSON.stringify(updatedMenus));
       setMenus(updatedMenus);
       
+      await logMenu('MENU_GENERATION_SUCCESS', `Menu generated successfully for ${currentDiet?.name || 'General'}`, {
+        menuId: newMenu.id,
+        dietType: newMenu.dietType,
+        totalCalories: newMenu.totalCalories,
+        mealCount: 3 + newMenu.snacks.length,
+        date: newMenu.date,
+      });
+      
       return newMenu;
     } catch (error) {
       console.log('Error generating menu:', error);
+      await logMenu('MENU_GENERATION_ERROR', `Failed to generate menu for ${currentDiet?.name || 'General'}`, { error: String(error), dietType: currentDiet?.name });
       throw error;
     }
   };
 
   const deleteMenu = async (menuId: string) => {
     try {
+      const menuToDelete = menus.find(m => m.id === menuId);
+      console.log('Deleting menu:', menuId);
+      await logMenu('MENU_DELETE_ATTEMPT', `User attempting to delete menu: ${menuToDelete?.dietType || 'Unknown'}`, { menuId, dietType: menuToDelete?.dietType });
+      
       const updatedMenus = menus.filter(menu => menu.id !== menuId);
       await AsyncStorage.setItem('menus', JSON.stringify(updatedMenus));
       setMenus(updatedMenus);
+      
+      await logMenu('MENU_DELETE_SUCCESS', `Menu deleted successfully: ${menuToDelete?.dietType || 'Unknown'}`, { menuId, dietType: menuToDelete?.dietType, date: menuToDelete?.date });
     } catch (error) {
       console.log('Error deleting menu:', error);
+      await logMenu('MENU_DELETE_ERROR', `Failed to delete menu: ${menuId}`, { menuId, error: String(error) });
       throw error;
     }
   };

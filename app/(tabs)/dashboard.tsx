@@ -6,6 +6,7 @@ import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMenu } from '@/contexts/MenuContext';
+import { logNavigation } from '@/utils/activityLogger';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -17,14 +18,24 @@ export default function DashboardScreen() {
     // Redirect to sign in if not authenticated
     if (!user && !isLoading) {
       console.log('User not authenticated, redirecting to sign in');
+      logNavigation('REDIRECT', 'User redirected to sign in (not authenticated)', { from: 'dashboard', to: 'signin' });
       router.replace('/auth/signin');
+    } else if (user) {
+      logNavigation('SCREEN_VIEW', 'User viewed Dashboard screen', { userId: user.id, menuCount: menus.length, hasDiet: !!currentDiet }, user.id, user.name);
     }
   }, [user, isLoading]);
 
   const handleGenerateMenu = async () => {
     if (!currentDiet) {
+      logNavigation('MENU_GENERATION_BLOCKED', 'Menu generation blocked - no diet selected', { userId: user?.id }, user?.id, user?.name);
       Alert.alert('Select a Diet', 'Please select a diet type first', [
-        { text: 'Select Diet', onPress: () => router.push('/diet/select') },
+        { 
+          text: 'Select Diet', 
+          onPress: () => {
+            logNavigation('NAVIGATION', 'User navigating to Diet Selection from alert', { from: 'dashboard', to: 'diet-select' }, user?.id, user?.name);
+            router.push('/diet/select');
+          }
+        },
         { text: 'Cancel', style: 'cancel' },
       ]);
       return;
@@ -96,7 +107,10 @@ export default function DashboardScreen() {
         </View>
         <TouchableOpacity 
           style={styles.profileButton}
-          onPress={() => router.push('/(tabs)/profile')}
+          onPress={() => {
+            logNavigation('NAVIGATION', 'User navigating to Profile from Dashboard', { from: 'dashboard', to: 'profile' }, user?.id, user?.name);
+            router.push('/(tabs)/profile');
+          }}
         >
           {user.profileImage ? (
             <Image 
@@ -197,7 +211,10 @@ export default function DashboardScreen() {
         <View style={styles.dietCard}>
           <View style={styles.dietCardHeader}>
             <Text style={styles.dietCardTitle}>Your Diet Plan</Text>
-            <TouchableOpacity onPress={() => router.push('/diet/select')}>
+            <TouchableOpacity onPress={() => {
+              logNavigation('NAVIGATION', 'User navigating to Diet Selection from Dashboard diet card', { from: 'dashboard', to: 'diet-select' }, user?.id, user?.name);
+              router.push('/diet/select');
+            }}>
               <Text style={styles.changeButton}>Change</Text>
             </TouchableOpacity>
           </View>
@@ -267,7 +284,10 @@ export default function DashboardScreen() {
       <View style={styles.menusSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Menus</Text>
-          <TouchableOpacity onPress={() => router.push('/menus/history')}>
+          <TouchableOpacity onPress={() => {
+            logNavigation('NAVIGATION', 'User navigating to Menu History from Dashboard', { from: 'dashboard', to: 'menu-history', menuCount: menus.length }, user?.id, user?.name);
+            router.push('/menus/history');
+          }}>
             <Text style={styles.viewAllButton}>View All</Text>
           </TouchableOpacity>
         </View>
@@ -288,7 +308,10 @@ export default function DashboardScreen() {
             <React.Fragment key={index}>
               <TouchableOpacity 
                 style={styles.menuCard}
-                onPress={() => router.push(`/menus/${menu.id}`)}
+                onPress={() => {
+                  logNavigation('NAVIGATION', 'User viewing menu details from Dashboard', { from: 'dashboard', to: 'menu-detail', menuId: menu.id, dietType: menu.dietType }, user?.id, user?.name);
+                  router.push(`/menus/${menu.id}`);
+                }}
               >
                 <View style={styles.menuCardHeader}>
                   <View style={styles.menuIconContainer}>

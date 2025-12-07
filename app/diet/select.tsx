@@ -5,11 +5,18 @@ import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useMenu } from '@/contexts/MenuContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { dietTypes } from '@/data/dietTypes';
+import { logNavigation } from '@/utils/activityLogger';
 
 export default function SelectDietScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const { currentDiet, setCurrentDiet } = useMenu();
+
+  React.useEffect(() => {
+    logNavigation('SCREEN_VIEW', 'User viewed Diet Selection screen', { userId: user?.id, currentDiet: currentDiet?.name }, user?.id, user?.name);
+  }, []);
 
   const handleSelectDiet = (diet: typeof dietTypes[0]) => {
     setCurrentDiet(diet);
@@ -21,7 +28,10 @@ export default function SelectDietScreen() {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => {
+            logNavigation('NAVIGATION', 'User navigating back from Diet Selection', { from: 'diet-select', selectedDiet: currentDiet?.name }, user?.id, user?.name);
+            router.back();
+          }}
         >
           <IconSymbol 
             ios_icon_name="chevron.left" 
