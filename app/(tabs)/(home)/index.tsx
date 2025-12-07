@@ -1,13 +1,42 @@
 
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { user, isLoading } = useAuth();
+
+  useEffect(() => {
+    // If user is authenticated, redirect to dashboard
+    if (user && !isLoading) {
+      console.log('User authenticated, redirecting to dashboard');
+      router.replace('/(tabs)/dashboard');
+    }
+  }, [user, isLoading]);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <IconSymbol 
+          ios_icon_name="fork.knife" 
+          android_material_icon_name="restaurant" 
+          size={60} 
+          color={colors.primary}
+        />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // Only show home screen if user is not authenticated
+  if (user) {
+    return null;
+  }
 
   const features = [
     {
@@ -110,6 +139,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: colors.text,
+    marginTop: 16,
   },
   contentContainer: {
     paddingTop: 60,

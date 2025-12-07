@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
@@ -9,9 +9,17 @@ import { useMenu } from '@/contexts/MenuContext';
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { menus, currentDiet, generateMenu } = useMenu();
   const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    // Redirect to sign in if not authenticated
+    if (!user && !isLoading) {
+      console.log('User not authenticated, redirecting to sign in');
+      router.replace('/auth/signin');
+    }
+  }, [user, isLoading]);
 
   const handleGenerateMenu = async () => {
     if (!currentDiet) {
@@ -33,6 +41,21 @@ export default function DashboardScreen() {
       setIsGenerating(false);
     }
   };
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!user) {
+    return null;
+  }
 
   const todayMenus = menus.filter(menu => {
     const menuDate = new Date(menu.date);
@@ -220,6 +243,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: colors.text,
+    marginTop: 16,
   },
   contentContainer: {
     paddingTop: 60,
