@@ -63,11 +63,13 @@ export default function DashboardScreen() {
     return menuDate.toDateString() === today.toDateString();
   });
 
+  const userName = user.name || 'User';
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Hello, {user?.name || 'User'}!</Text>
+          <Text style={styles.greeting}>Hello, {userName}!</Text>
           <Text style={styles.subGreeting}>Ready to plan your meals?</Text>
         </View>
         <TouchableOpacity 
@@ -150,7 +152,7 @@ export default function DashboardScreen() {
             color={colors.accent}
           />
           <Text style={styles.statNumber}>{todayMenus.length}</Text>
-          <Text style={styles.statLabel}>Today&apos;s Menus</Text>
+          <Text style={styles.statLabel}>Today Menus</Text>
         </View>
         <View style={styles.statCard}>
           <IconSymbol 

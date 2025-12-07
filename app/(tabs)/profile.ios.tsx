@@ -69,7 +69,7 @@ export default function ProfileScreen() {
     {
       icon: 'restaurant',
       title: 'Current Diet',
-      value: currentDiet?.name || 'Not selected',
+      value: currentDiet ? currentDiet.name : 'Not selected',
       onPress: () => router.push('/diet/select'),
     },
     {
