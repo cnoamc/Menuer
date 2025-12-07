@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, TextInput, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -9,8 +9,12 @@ import { useMenu } from '@/contexts/MenuContext';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateUserProfile } = useAuth();
   const { menus, currentDiet } = useMenu();
+  const [isEditingWeight, setIsEditingWeight] = React.useState(false);
+  const [tempWeight, setTempWeight] = React.useState('');
+  const [isEditingGoal, setIsEditingGoal] = React.useState(false);
+  const [tempGoal, setTempGoal] = React.useState('');
 
   const handleSignOut = () => {
     Alert.alert(
@@ -26,7 +30,6 @@ export default function ProfileScreen() {
             try {
               await signOut();
               console.log('Sign out completed - navigation will be handled automatically');
-              // Don't manually navigate - let _layout.tsx handle it
             } catch (error) {
               console.log('Error during sign out:', error);
               Alert.alert('Error', 'Failed to sign out. Please try again.');
@@ -35,6 +38,28 @@ export default function ProfileScreen() {
         },
       ]
     );
+  };
+
+  const handleUpdateWeight = async () => {
+    const weight = parseFloat(tempWeight);
+    if (isNaN(weight) || weight <= 0) {
+      Alert.alert('Invalid Weight', 'Please enter a valid weight');
+      return;
+    }
+    await updateUserProfile({ currentWeight: weight });
+    setIsEditingWeight(false);
+    setTempWeight('');
+  };
+
+  const handleUpdateGoal = async () => {
+    const goal = parseFloat(tempGoal);
+    if (isNaN(goal) || goal <= 0) {
+      Alert.alert('Invalid Goal', 'Please enter a valid goal weight');
+      return;
+    }
+    await updateUserProfile({ goalWeight: goal });
+    setIsEditingGoal(false);
+    setTempGoal('');
   };
 
   if (!user) {
@@ -49,7 +74,7 @@ export default function ProfileScreen() {
           />
           <Text style={styles.notSignedInTitle}>Not Signed In</Text>
           <Text style={styles.notSignedInText}>
-            Sign in to save your menus and preferences
+            Sign in to save your menus and track your progress
           </Text>
           <TouchableOpacity 
             style={styles.primaryButton}
@@ -79,30 +104,157 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      {/* Profile Header */}
       <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <IconSymbol 
-            ios_icon_name="person.circle.fill" 
-            android_material_icon_name="account_circle" 
-            size={80} 
-            color={colors.primary}
-          />
+        <View style={styles.profileImageContainer}>
+          {user.profileImage ? (
+            <Image 
+              source={{ uri: user.profileImage }} 
+              style={styles.profileImageLarge}
+            />
+          ) : (
+            <IconSymbol 
+              ios_icon_name="person.circle.fill" 
+              android_material_icon_name="account_circle" 
+              size={100} 
+              color={colors.primary}
+            />
+          )}
         </View>
         <Text style={styles.name}>{user.name}</Text>
         <Text style={styles.email}>{user.email}</Text>
       </View>
 
+      {/* Weight Management Card */}
+      <View style={styles.weightManagementCard}>
+        <Text style={styles.cardTitle}>Weight Management</Text>
+        
+        <View style={styles.weightRow}>
+          <View style={styles.weightItem}>
+            <Text style={styles.weightLabel}>Current Weight</Text>
+            {isEditingWeight ? (
+              <View style={styles.editContainer}>
+                <TextInput
+                  style={styles.weightInput}
+                  value={tempWeight}
+                  onChangeText={setTempWeight}
+                  keyboardType="decimal-pad"
+                  placeholder={`${user.currentWeight || 0}`}
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <TouchableOpacity onPress={handleUpdateWeight} style={styles.saveButton}>
+                  <IconSymbol 
+                    ios_icon_name="checkmark.circle.fill" 
+                    android_material_icon_name="check_circle" 
+                    size={24} 
+                    color={colors.success}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setIsEditingWeight(false)} style={styles.cancelButton}>
+                  <IconSymbol 
+                    ios_icon_name="xmark.circle.fill" 
+                    android_material_icon_name="cancel" 
+                    size={24} 
+                    color={colors.accent}
+                  />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                onPress={() => {
+                  setIsEditingWeight(true);
+                  setTempWeight(user.currentWeight?.toString() || '');
+                }}
+                style={styles.weightValueContainer}
+              >
+                <Text style={styles.weightValue}>{user.currentWeight || 0} kg</Text>
+                <IconSymbol 
+                  ios_icon_name="pencil.circle" 
+                  android_material_icon_name="edit" 
+                  size={20} 
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.weightDivider} />
+
+          <View style={styles.weightItem}>
+            <Text style={styles.weightLabel}>Goal Weight</Text>
+            {isEditingGoal ? (
+              <View style={styles.editContainer}>
+                <TextInput
+                  style={styles.weightInput}
+                  value={tempGoal}
+                  onChangeText={setTempGoal}
+                  keyboardType="decimal-pad"
+                  placeholder={`${user.goalWeight || 0}`}
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <TouchableOpacity onPress={handleUpdateGoal} style={styles.saveButton}>
+                  <IconSymbol 
+                    ios_icon_name="checkmark.circle.fill" 
+                    android_material_icon_name="check_circle" 
+                    size={24} 
+                    color={colors.success}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setIsEditingGoal(false)} style={styles.cancelButton}>
+                  <IconSymbol 
+                    ios_icon_name="xmark.circle.fill" 
+                    android_material_icon_name="cancel" 
+                    size={24} 
+                    color={colors.accent}
+                  />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                onPress={() => {
+                  setIsEditingGoal(true);
+                  setTempGoal(user.goalWeight?.toString() || '');
+                }}
+                style={styles.weightValueContainer}
+              >
+                <Text style={styles.weightValue}>{user.goalWeight || 0} kg</Text>
+                <IconSymbol 
+                  ios_icon_name="pencil.circle" 
+                  android_material_icon_name="edit" 
+                  size={20} 
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </View>
+
+      {/* Stats Container */}
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
+          <IconSymbol 
+            ios_icon_name="list.bullet" 
+            android_material_icon_name="list" 
+            size={32} 
+            color={colors.primary}
+          />
           <Text style={styles.statNumber}>{menus.length}</Text>
           <Text style={styles.statLabel}>Total Menus</Text>
         </View>
         <View style={styles.statBox}>
+          <IconSymbol 
+            ios_icon_name="fork.knife" 
+            android_material_icon_name="restaurant" 
+            size={32} 
+            color={colors.secondary}
+          />
           <Text style={styles.statNumber}>{currentDiet ? '1' : '0'}</Text>
           <Text style={styles.statLabel}>Active Diet</Text>
         </View>
       </View>
 
+      {/* Settings Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Settings</Text>
         {profileOptions.map((option, index) => (
@@ -134,23 +286,7 @@ export default function ProfileScreen() {
         ))}
       </View>
 
-      <View style={styles.infoSection}>
-        <View style={styles.infoCard}>
-          <IconSymbol 
-            ios_icon_name="info.circle" 
-            android_material_icon_name="info" 
-            size={24} 
-            color={colors.accent}
-          />
-          <View style={styles.infoContent}>
-            <Text style={styles.infoTitle}>Cloud Sync Available</Text>
-            <Text style={styles.infoText}>
-              Enable Supabase to sync your data across all devices and backup to the cloud.
-            </Text>
-          </View>
-        </View>
-      </View>
-
+      {/* Sign Out Button */}
       <TouchableOpacity 
         style={styles.signOutButton}
         onPress={handleSignOut}
@@ -173,7 +309,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   contentContainer: {
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'android' ? 48 : 60,
     paddingHorizontal: 20,
     paddingBottom: 120,
   },
@@ -199,10 +335,18 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
-  avatarContainer: {
+  profileImageContainer: {
     marginBottom: 16,
+    borderRadius: 50,
+    overflow: 'hidden',
+    borderWidth: 4,
+    borderColor: colors.primary,
+  },
+  profileImageLarge: {
+    width: 100,
+    height: 100,
   },
   name: {
     fontSize: 28,
@@ -214,10 +358,83 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
   },
+  weightManagementCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  weightRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  weightItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  weightDivider: {
+    width: 1,
+    backgroundColor: colors.highlight,
+    marginHorizontal: 16,
+  },
+  weightLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  weightValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  weightValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  editContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  weightInput: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.primary,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    minWidth: 60,
+    textAlign: 'center',
+  },
+  saveButton: {
+    padding: 4,
+  },
+  cancelButton: {
+    padding: 4,
+  },
   statsContainer: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 32,
+    marginBottom: 24,
   },
   statBox: {
     flex: 1,
@@ -225,21 +442,31 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
-    boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.06)',
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   statNumber: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: colors.text,
+    marginTop: 8,
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 20,
@@ -254,8 +481,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.06)',
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   optionIconContainer: {
     width: 48,
@@ -279,40 +515,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
   },
-  infoSection: {
-    marginBottom: 32,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    backgroundColor: colors.highlight,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.accent,
-  },
-  infoContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  infoText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
   primaryButton: {
     backgroundColor: colors.primary,
     borderRadius: 12,
     padding: 18,
     width: '100%',
     alignItems: 'center',
-    boxShadow: '0px 4px 12px rgba(143, 188, 143, 0.3)',
-    elevation: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   primaryButtonText: {
     fontSize: 18,

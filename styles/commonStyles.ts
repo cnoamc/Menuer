@@ -2,14 +2,19 @@
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
 export const colors = {
-  background: '#F5F5DC',      // Beige
-  text: '#333333',            // Dark Gray
-  textSecondary: '#777777',   // Medium Gray
-  primary: '#8FBC8F',         // Dark Sea Green
-  secondary: '#BDB76B',       // Dark Khaki
-  accent: '#E9967A',          // Dark Salmon
-  card: '#FFFFFF',            // White
-  highlight: '#FAFAD2',       // Light Goldenrod Yellow
+  // Navy Blue, Purple, White color scheme for Menuer
+  background: '#F8F9FE',      // Very light blue-white
+  text: '#1A1F3A',            // Dark navy (almost black)
+  textSecondary: '#6B7280',   // Medium gray
+  primary: '#4F46E5',         // Indigo/Purple
+  secondary: '#7C3AED',       // Vibrant purple
+  accent: '#EC4899',          // Pink accent
+  card: '#FFFFFF',            // Pure white
+  highlight: '#EEF2FF',       // Light indigo
+  navy: '#1E3A8A',            // Navy blue
+  lightPurple: '#DDD6FE',     // Light purple
+  success: '#10B981',         // Green for success
+  warning: '#F59E0B',         // Orange for warnings
 };
 
 export const buttonStyles = StyleSheet.create({
@@ -73,14 +78,14 @@ export const commonStyles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.card,
-    borderColor: colors.secondary,
+    borderColor: colors.lightPurple,
     borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
+    borderRadius: 16,
+    padding: 16,
     marginVertical: 8,
     width: '100%',
-    boxShadow: '0px 2px 3px rgba(0, 0, 0, 0.1)',
-    elevation: 2,
+    boxShadow: '0px 4px 12px rgba(79, 70, 229, 0.1)',
+    elevation: 3,
   },
   icon: {
     width: 60,

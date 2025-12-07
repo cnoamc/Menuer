@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -57,6 +57,25 @@ export default function DashboardScreen() {
     return null;
   }
 
+  // Calculate days since diet started
+  const getDaysSinceDietStarted = () => {
+    if (!user.dietStartDate) return 0;
+    const startDate = new Date(user.dietStartDate);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  // Calculate weight progress
+  const getWeightProgress = () => {
+    if (!user.currentWeight || !user.goalWeight) return 0;
+    const startWeight = user.currentWeight + 5; // Assume started 5kg heavier
+    const totalToLose = startWeight - user.goalWeight;
+    const lost = startWeight - user.currentWeight;
+    return Math.min((lost / totalToLose) * 100, 100);
+  };
+
   const todayMenus = menus.filter(menu => {
     const menuDate = new Date(menu.date);
     const today = new Date();
@@ -64,35 +83,124 @@ export default function DashboardScreen() {
   });
 
   const userName = user.name || 'User';
+  const daysSinceDietStarted = getDaysSinceDietStarted();
+  const weightProgress = getWeightProgress();
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      {/* Header with Profile */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Hello, {userName}!</Text>
-          <Text style={styles.subGreeting}>Ready to plan your meals?</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.appName}>Menuer</Text>
+          <Text style={styles.greeting}>Welcome back, {userName}!</Text>
         </View>
         <TouchableOpacity 
           style={styles.profileButton}
           onPress={() => router.push('/(tabs)/profile')}
         >
-          <IconSymbol 
-            ios_icon_name="person.circle" 
-            android_material_icon_name="account_circle" 
-            size={32} 
-            color={colors.primary}
-          />
+          {user.profileImage ? (
+            <Image 
+              source={{ uri: user.profileImage }} 
+              style={styles.profileImage}
+            />
+          ) : (
+            <IconSymbol 
+              ios_icon_name="person.circle.fill" 
+              android_material_icon_name="account_circle" 
+              size={48} 
+              color={colors.primary}
+            />
+          )}
         </TouchableOpacity>
       </View>
 
-      <View style={styles.dietCard}>
-        <View style={styles.dietCardHeader}>
-          <Text style={styles.dietCardTitle}>Current Diet</Text>
-          <TouchableOpacity onPress={() => router.push('/diet/select')}>
-            <Text style={styles.changeButton}>Change</Text>
-          </TouchableOpacity>
+      {/* Analytics Cards */}
+      <View style={styles.analyticsSection}>
+        <Text style={styles.sectionTitle}>Your Progress</Text>
+        
+        <View style={styles.analyticsGrid}>
+          {/* Days on Diet */}
+          <View style={[styles.analyticsCard, styles.primaryCard]}>
+            <View style={styles.analyticsIconContainer}>
+              <IconSymbol 
+                ios_icon_name="calendar" 
+                android_material_icon_name="calendar_today" 
+                size={28} 
+                color={colors.card}
+              />
+            </View>
+            <Text style={styles.analyticsNumber}>{daysSinceDietStarted}</Text>
+            <Text style={styles.analyticsLabel}>Days on Diet</Text>
+          </View>
+
+          {/* Current Diet */}
+          <View style={[styles.analyticsCard, styles.secondaryCard]}>
+            <View style={styles.analyticsIconContainer}>
+              <IconSymbol 
+                ios_icon_name="fork.knife" 
+                android_material_icon_name="restaurant" 
+                size={28} 
+                color={colors.card}
+              />
+            </View>
+            <Text style={styles.analyticsText}>{currentDiet?.name || 'None'}</Text>
+            <Text style={styles.analyticsLabel}>Current Diet</Text>
+          </View>
         </View>
-        {currentDiet ? (
+
+        {/* Weight Progress Card */}
+        <View style={styles.weightCard}>
+          <View style={styles.weightHeader}>
+            <View>
+              <Text style={styles.weightTitle}>Weight Progress</Text>
+              <Text style={styles.weightSubtitle}>Keep up the great work!</Text>
+            </View>
+            <IconSymbol 
+              ios_icon_name="chart.line.uptrend.xyaxis" 
+              android_material_icon_name="trending_up" 
+              size={32} 
+              color={colors.primary}
+            />
+          </View>
+          
+          <View style={styles.weightStats}>
+            <View style={styles.weightStatItem}>
+              <Text style={styles.weightStatLabel}>Current</Text>
+              <Text style={styles.weightStatValue}>{user.currentWeight || 0} kg</Text>
+            </View>
+            <View style={styles.weightStatDivider} />
+            <View style={styles.weightStatItem}>
+              <Text style={styles.weightStatLabel}>Goal</Text>
+              <Text style={styles.weightStatValue}>{user.goalWeight || 0} kg</Text>
+            </View>
+            <View style={styles.weightStatDivider} />
+            <View style={styles.weightStatItem}>
+              <Text style={styles.weightStatLabel}>To Go</Text>
+              <Text style={styles.weightStatValue}>
+                {Math.max((user.currentWeight || 0) - (user.goalWeight || 0), 0).toFixed(1)} kg
+              </Text>
+            </View>
+          </View>
+
+          {/* Progress Bar */}
+          <View style={styles.progressBarContainer}>
+            <View style={styles.progressBarBackground}>
+              <View style={[styles.progressBarFill, { width: `${weightProgress}%` }]} />
+            </View>
+            <Text style={styles.progressText}>{weightProgress.toFixed(0)}% Complete</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Current Diet Card */}
+      {currentDiet && (
+        <View style={styles.dietCard}>
+          <View style={styles.dietCardHeader}>
+            <Text style={styles.dietCardTitle}>Your Diet Plan</Text>
+            <TouchableOpacity onPress={() => router.push('/diet/select')}>
+              <Text style={styles.changeButton}>Change</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.dietInfo}>
             <View style={styles.dietIconContainer}>
               <IconSymbol 
@@ -107,22 +215,10 @@ export default function DashboardScreen() {
               <Text style={styles.dietDescription}>{currentDiet.description}</Text>
             </View>
           </View>
-        ) : (
-          <TouchableOpacity 
-            style={styles.selectDietButton}
-            onPress={() => router.push('/diet/select')}
-          >
-            <IconSymbol 
-              ios_icon_name="plus.circle" 
-              android_material_icon_name="add_circle" 
-              size={24} 
-              color={colors.primary}
-            />
-            <Text style={styles.selectDietText}>Select Your Diet</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+        </View>
+      )}
 
+      {/* Generate Menu Button */}
       <TouchableOpacity 
         style={styles.generateButton}
         onPress={handleGenerateMenu}
@@ -143,6 +239,7 @@ export default function DashboardScreen() {
         )}
       </TouchableOpacity>
 
+      {/* Quick Stats */}
       <View style={styles.statsSection}>
         <View style={styles.statCard}>
           <IconSymbol 
@@ -152,7 +249,7 @@ export default function DashboardScreen() {
             color={colors.accent}
           />
           <Text style={styles.statNumber}>{todayMenus.length}</Text>
-          <Text style={styles.statLabel}>Today Menus</Text>
+          <Text style={styles.statLabel}>Today&apos;s Menus</Text>
         </View>
         <View style={styles.statCard}>
           <IconSymbol 
@@ -166,6 +263,7 @@ export default function DashboardScreen() {
         </View>
       </View>
 
+      {/* Recent Menus */}
       <View style={styles.menusSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Menus</Text>
@@ -266,23 +364,161 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
+  headerLeft: {
+    flex: 1,
+  },
+  appName: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 4,
+  },
   greeting: {
-    fontSize: 28,
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  profileButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: colors.primary,
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+  },
+  analyticsSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  analyticsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  analyticsCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  primaryCard: {
+    backgroundColor: colors.primary,
+  },
+  secondaryCard: {
+    backgroundColor: colors.secondary,
+  },
+  analyticsIconContainer: {
+    marginBottom: 12,
+  },
+  analyticsNumber: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: colors.card,
+    marginBottom: 4,
+  },
+  analyticsText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.card,
+    marginBottom: 4,
+  },
+  analyticsLabel: {
+    fontSize: 12,
+    color: colors.card,
+    opacity: 0.9,
+  },
+  weightCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  weightHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  weightTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  weightSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  weightStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  weightStatItem: {
+    alignItems: 'center',
+  },
+  weightStatDivider: {
+    width: 1,
+    backgroundColor: colors.highlight,
+  },
+  weightStatLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  weightStatValue: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
   },
-  subGreeting: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginTop: 4,
+  progressBarContainer: {
+    gap: 8,
   },
-  profileButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
+  progressBarBackground: {
+    height: 12,
+    backgroundColor: colors.highlight,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: colors.success,
+    borderRadius: 6,
+  },
+  progressText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+    textAlign: 'center',
   },
   dietCard: {
     backgroundColor: colors.card,
@@ -343,23 +579,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 20,
-  },
-  selectDietButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    backgroundColor: colors.highlight,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    borderStyle: 'dashed',
-  },
-  selectDietText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-    marginLeft: 8,
   },
   generateButton: {
     backgroundColor: colors.primary,
@@ -429,11 +648,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
   },
   viewAllButton: {
     fontSize: 14,

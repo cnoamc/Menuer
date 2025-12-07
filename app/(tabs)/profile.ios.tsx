@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -8,12 +8,17 @@ import { GlassView } from 'expo-glass-effect';
 import { useTheme } from '@react-navigation/native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMenu } from '@/contexts/MenuContext';
+import { colors } from '@/styles/commonStyles';
 
 export default function ProfileScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateUserProfile } = useAuth();
   const { menus, currentDiet } = useMenu();
+  const [isEditingWeight, setIsEditingWeight] = React.useState(false);
+  const [tempWeight, setTempWeight] = React.useState('');
+  const [isEditingGoal, setIsEditingGoal] = React.useState(false);
+  const [tempGoal, setTempGoal] = React.useState('');
 
   const handleSignOut = () => {
     Alert.alert(
@@ -29,7 +34,6 @@ export default function ProfileScreen() {
             try {
               await signOut();
               console.log('Sign out completed - navigation will be handled automatically');
-              // Don't manually navigate - let _layout.tsx handle it
             } catch (error) {
               console.log('Error during sign out:', error);
               Alert.alert('Error', 'Failed to sign out. Please try again.');
@@ -38,6 +42,28 @@ export default function ProfileScreen() {
         },
       ]
     );
+  };
+
+  const handleUpdateWeight = async () => {
+    const weight = parseFloat(tempWeight);
+    if (isNaN(weight) || weight <= 0) {
+      Alert.alert('Invalid Weight', 'Please enter a valid weight');
+      return;
+    }
+    await updateUserProfile({ currentWeight: weight });
+    setIsEditingWeight(false);
+    setTempWeight('');
+  };
+
+  const handleUpdateGoal = async () => {
+    const goal = parseFloat(tempGoal);
+    if (isNaN(goal) || goal <= 0) {
+      Alert.alert('Invalid Goal', 'Please enter a valid goal weight');
+      return;
+    }
+    await updateUserProfile({ goalWeight: goal });
+    setIsEditingGoal(false);
+    setTempGoal('');
   };
 
   if (!user) {
@@ -52,10 +78,10 @@ export default function ProfileScreen() {
           />
           <Text style={[styles.notSignedInTitle, { color: theme.colors.text }]}>Not Signed In</Text>
           <Text style={[styles.notSignedInText, { color: theme.dark ? '#98989D' : '#666' }]}>
-            Sign in to save your menus and preferences
+            Sign in to save your menus and track your progress
           </Text>
           <TouchableOpacity 
-            style={[styles.primaryButton, { backgroundColor: theme.colors.primary }]}
+            style={[styles.primaryButton, { backgroundColor: colors.primary }]}
             onPress={() => router.push('/auth/signin')}
           >
             <Text style={styles.primaryButtonText}>Sign In</Text>
@@ -86,29 +112,158 @@ export default function ProfileScreen() {
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
       >
+        {/* Profile Header */}
         <GlassView style={styles.profileHeader} glassEffectStyle="regular">
-          <IconSymbol 
-            ios_icon_name="person.circle.fill" 
-            android_material_icon_name="account_circle" 
-            size={80} 
-            color={theme.colors.primary} 
-          />
+          <View style={styles.profileImageContainer}>
+            {user.profileImage ? (
+              <Image 
+                source={{ uri: user.profileImage }} 
+                style={styles.profileImageLarge}
+              />
+            ) : (
+              <IconSymbol 
+                ios_icon_name="person.circle.fill" 
+                android_material_icon_name="account_circle" 
+                size={100} 
+                color={colors.primary} 
+              />
+            )}
+          </View>
           <Text style={[styles.name, { color: theme.colors.text }]}>{user.name}</Text>
           <Text style={[styles.email, { color: theme.dark ? '#98989D' : '#666' }]}>{user.email}</Text>
         </GlassView>
 
+        {/* Weight Management */}
+        <GlassView style={styles.weightManagementCard} glassEffectStyle="regular">
+          <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Weight Management</Text>
+          
+          <View style={styles.weightRow}>
+            <View style={styles.weightItem}>
+              <Text style={[styles.weightLabel, { color: theme.dark ? '#98989D' : '#666' }]}>Current Weight</Text>
+              {isEditingWeight ? (
+                <View style={styles.editContainer}>
+                  <TextInput
+                    style={[styles.weightInput, { color: theme.colors.text, borderBottomColor: colors.primary }]}
+                    value={tempWeight}
+                    onChangeText={setTempWeight}
+                    keyboardType="decimal-pad"
+                    placeholder={`${user.currentWeight || 0}`}
+                    placeholderTextColor={theme.dark ? '#98989D' : '#666'}
+                  />
+                  <TouchableOpacity onPress={handleUpdateWeight}>
+                    <IconSymbol 
+                      ios_icon_name="checkmark.circle.fill" 
+                      android_material_icon_name="check_circle" 
+                      size={24} 
+                      color={colors.success}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setIsEditingWeight(false)}>
+                    <IconSymbol 
+                      ios_icon_name="xmark.circle.fill" 
+                      android_material_icon_name="cancel" 
+                      size={24} 
+                      color={colors.accent}
+                    />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity 
+                  onPress={() => {
+                    setIsEditingWeight(true);
+                    setTempWeight(user.currentWeight?.toString() || '');
+                  }}
+                  style={styles.weightValueContainer}
+                >
+                  <Text style={[styles.weightValue, { color: theme.colors.text }]}>{user.currentWeight || 0} kg</Text>
+                  <IconSymbol 
+                    ios_icon_name="pencil.circle" 
+                    android_material_icon_name="edit" 
+                    size={20} 
+                    color={colors.primary}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <View style={[styles.weightDivider, { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]} />
+
+            <View style={styles.weightItem}>
+              <Text style={[styles.weightLabel, { color: theme.dark ? '#98989D' : '#666' }]}>Goal Weight</Text>
+              {isEditingGoal ? (
+                <View style={styles.editContainer}>
+                  <TextInput
+                    style={[styles.weightInput, { color: theme.colors.text, borderBottomColor: colors.primary }]}
+                    value={tempGoal}
+                    onChangeText={setTempGoal}
+                    keyboardType="decimal-pad"
+                    placeholder={`${user.goalWeight || 0}`}
+                    placeholderTextColor={theme.dark ? '#98989D' : '#666'}
+                  />
+                  <TouchableOpacity onPress={handleUpdateGoal}>
+                    <IconSymbol 
+                      ios_icon_name="checkmark.circle.fill" 
+                      android_material_icon_name="check_circle" 
+                      size={24} 
+                      color={colors.success}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setIsEditingGoal(false)}>
+                    <IconSymbol 
+                      ios_icon_name="xmark.circle.fill" 
+                      android_material_icon_name="cancel" 
+                      size={24} 
+                      color={colors.accent}
+                    />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity 
+                  onPress={() => {
+                    setIsEditingGoal(true);
+                    setTempGoal(user.goalWeight?.toString() || '');
+                  }}
+                  style={styles.weightValueContainer}
+                >
+                  <Text style={[styles.weightValue, { color: theme.colors.text }]}>{user.goalWeight || 0} kg</Text>
+                  <IconSymbol 
+                    ios_icon_name="pencil.circle" 
+                    android_material_icon_name="edit" 
+                    size={20} 
+                    color={colors.primary}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </GlassView>
+
+        {/* Stats */}
         <GlassView style={styles.statsContainer} glassEffectStyle="regular">
           <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: theme.colors.primary }]}>{menus.length}</Text>
+            <IconSymbol 
+              ios_icon_name="list.bullet" 
+              android_material_icon_name="list" 
+              size={32} 
+              color={colors.primary}
+            />
+            <Text style={[styles.statNumber, { color: theme.colors.text }]}>{menus.length}</Text>
             <Text style={[styles.statLabel, { color: theme.dark ? '#98989D' : '#666' }]}>Total Menus</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: theme.colors.primary }]}>{currentDiet ? '1' : '0'}</Text>
+            <IconSymbol 
+              ios_icon_name="fork.knife" 
+              android_material_icon_name="restaurant" 
+              size={32} 
+              color={colors.secondary}
+            />
+            <Text style={[styles.statNumber, { color: theme.colors.text }]}>{currentDiet ? '1' : '0'}</Text>
             <Text style={[styles.statLabel, { color: theme.dark ? '#98989D' : '#666' }]}>Active Diet</Text>
           </View>
         </GlassView>
 
+        {/* Settings */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Settings</Text>
           {profileOptions.map((option, index) => (
@@ -120,7 +275,7 @@ export default function ProfileScreen() {
                       ios_icon_name={option.icon} 
                       android_material_icon_name={option.icon as any} 
                       size={24} 
-                      color={theme.colors.primary}
+                      color={colors.primary}
                     />
                   </View>
                   <View style={styles.optionContent}>
@@ -139,21 +294,7 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        <GlassView style={styles.infoCard} glassEffectStyle="regular">
-          <IconSymbol 
-            ios_icon_name="info.circle" 
-            android_material_icon_name="info" 
-            size={24} 
-            color={theme.colors.primary}
-          />
-          <View style={styles.infoContent}>
-            <Text style={[styles.infoTitle, { color: theme.colors.text }]}>Cloud Sync Available</Text>
-            <Text style={[styles.infoText, { color: theme.dark ? '#98989D' : '#666' }]}>
-              Enable Supabase to sync your data across all devices and backup to the cloud.
-            </Text>
-          </View>
-        </GlassView>
-
+        {/* Sign Out */}
         <TouchableOpacity 
           style={styles.signOutButton}
           onPress={handleSignOut}
@@ -220,12 +361,71 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     gap: 12,
   },
+  profileImageContainer: {
+    borderRadius: 50,
+    overflow: 'hidden',
+    borderWidth: 4,
+    borderColor: colors.primary,
+  },
+  profileImageLarge: {
+    width: 100,
+    height: 100,
+  },
   name: {
     fontSize: 28,
     fontWeight: 'bold',
   },
   email: {
     fontSize: 16,
+  },
+  weightManagementCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  weightRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  weightItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  weightDivider: {
+    width: 1,
+    marginHorizontal: 16,
+  },
+  weightLabel: {
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  weightValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  weightValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  editContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  weightInput: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    borderBottomWidth: 2,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    minWidth: 60,
+    textAlign: 'center',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -247,10 +447,11 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 32,
     fontWeight: 'bold',
+    marginTop: 8,
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
   },
   section: {
     marginBottom: 24,
@@ -285,25 +486,6 @@ const styles = StyleSheet.create({
   },
   optionValue: {
     fontSize: 14,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-  },
-  infoContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  infoText: {
-    fontSize: 14,
-    lineHeight: 20,
   },
   signOutButton: {
     borderRadius: 12,
