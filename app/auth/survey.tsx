@@ -28,44 +28,114 @@ export default function SurveyScreen() {
   const totalSteps = 7;
 
   React.useEffect(() => {
-    logAuth('SURVEY_STARTED', `User ${user?.name} started onboarding survey`, { userId: user?.id }, user?.id, user?.name);
+    const surveyStartData = {
+      userId: user?.id,
+      userName: user?.name,
+      userEmail: user?.email,
+      timestamp: new Date().toISOString(),
+    };
+    
+    console.log('📋 Survey Started - User Data:', surveyStartData);
+    logAuth('SURVEY_STARTED', `User ${user?.name} started onboarding survey`, surveyStartData, user?.id, user?.name);
   }, []);
 
   const handleNext = () => {
-    // Validate current step
+    // Validate current step and log the data
     if (currentStep === 1 && !weight) {
       Alert.alert('Required', 'Please enter your current weight');
+      logProfile('SURVEY_VALIDATION_FAILED', 'Weight field validation failed - empty', { step: 1, userId: user?.id }, user?.id, user?.name);
       return;
     }
+    if (currentStep === 1 && weight) {
+      const weightData = { weight: parseFloat(weight), unit: 'kg', step: 1 };
+      console.log('📋 Weight Recorded:', weightData);
+      logProfile('SURVEY_WEIGHT_INPUT', `Current weight entered: ${weight} kg`, weightData, user?.id, user?.name);
+    }
+
     if (currentStep === 2 && !goalWeight) {
       Alert.alert('Required', 'Please enter your goal weight');
+      logProfile('SURVEY_VALIDATION_FAILED', 'Goal weight field validation failed - empty', { step: 2, userId: user?.id }, user?.id, user?.name);
       return;
     }
+    if (currentStep === 2 && goalWeight) {
+      const goalWeightData = { goalWeight: parseFloat(goalWeight), unit: 'kg', step: 2 };
+      console.log('📋 Goal Weight Recorded:', goalWeightData);
+      logProfile('SURVEY_GOAL_WEIGHT_INPUT', `Goal weight entered: ${goalWeight} kg`, goalWeightData, user?.id, user?.name);
+    }
+
     if (currentStep === 3 && !age) {
       Alert.alert('Required', 'Please enter your age');
+      logProfile('SURVEY_VALIDATION_FAILED', 'Age field validation failed - empty', { step: 3, userId: user?.id }, user?.id, user?.name);
       return;
     }
+    if (currentStep === 3 && age) {
+      const ageData = { age: parseInt(age), unit: 'years', step: 3 };
+      console.log('📋 Age Recorded:', ageData);
+      logProfile('SURVEY_AGE_INPUT', `Age entered: ${age} years`, ageData, user?.id, user?.name);
+    }
+
     if (currentStep === 4 && !height) {
       Alert.alert('Required', 'Please enter your height');
+      logProfile('SURVEY_VALIDATION_FAILED', 'Height field validation failed - empty', { step: 4, userId: user?.id }, user?.id, user?.name);
       return;
     }
+    if (currentStep === 4 && height) {
+      const heightData = { height: parseFloat(height), unit: 'cm', step: 4 };
+      console.log('📋 Height Recorded:', heightData);
+      logProfile('SURVEY_HEIGHT_INPUT', `Height entered: ${height} cm`, heightData, user?.id, user?.name);
+    }
+
     if (currentStep === 5 && !goals) {
       Alert.alert('Required', 'Please enter your goals');
+      logProfile('SURVEY_VALIDATION_FAILED', 'Goals field validation failed - empty', { step: 5, userId: user?.id }, user?.id, user?.name);
       return;
     }
+    if (currentStep === 5 && goals) {
+      const goalsData = { goals, goalsLength: goals.length, step: 5 };
+      console.log('📋 Goals Recorded:', goalsData);
+      logProfile('SURVEY_GOALS_INPUT', `Goals entered: ${goals}`, goalsData, user?.id, user?.name);
+    }
+
+    if (currentStep === 6 && endDate) {
+      const endDateData = { 
+        endDate: endDate.toISOString(), 
+        endDateFormatted: endDate.toLocaleDateString(),
+        daysUntilGoal: Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+        step: 6 
+      };
+      console.log('📋 End Date Recorded:', endDateData);
+      logProfile('SURVEY_END_DATE_INPUT', `Diet end date selected: ${endDate.toLocaleDateString()}`, endDateData, user?.id, user?.name);
+    }
+
     if (currentStep === 7 && !selectedDiet) {
       Alert.alert('Required', 'Please select a diet');
+      logProfile('SURVEY_VALIDATION_FAILED', 'Diet selection validation failed - no diet selected', { step: 7, userId: user?.id }, user?.id, user?.name);
       return;
     }
 
     if (currentStep < totalSteps) {
-      logProfile('SURVEY_STEP_COMPLETED', `User completed survey step ${currentStep}`, { step: currentStep, userId: user?.id }, user?.id, user?.name);
+      const stepData = { 
+        fromStep: currentStep, 
+        toStep: currentStep + 1, 
+        totalSteps,
+        progress: `${currentStep}/${totalSteps}`,
+        userId: user?.id 
+      };
+      console.log('📋 Survey Step Completed:', stepData);
+      logProfile('SURVEY_STEP_COMPLETED', `User completed survey step ${currentStep}`, stepData, user?.id, user?.name);
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
+      const backData = { 
+        fromStep: currentStep, 
+        toStep: currentStep - 1, 
+        userId: user?.id 
+      };
+      console.log('📋 Survey Step Back:', backData);
+      logProfile('SURVEY_STEP_BACK', `User went back from step ${currentStep} to ${currentStep - 1}`, backData, user?.id, user?.name);
       setCurrentStep(currentStep - 1);
     }
   };
@@ -73,57 +143,208 @@ export default function SurveyScreen() {
   const handleComplete = async () => {
     if (!selectedDiet) {
       Alert.alert('Required', 'Please select a diet');
+      logProfile('SURVEY_VALIDATION_FAILED', 'Final validation failed - no diet selected', { step: 7, userId: user?.id }, user?.id, user?.name);
       return;
     }
 
     setIsLoading(true);
+    
     try {
       const parsedWeight = parseFloat(weight);
       const parsedGoalWeight = parseFloat(goalWeight);
+      const parsedAge = parseInt(age);
+      const parsedHeight = parseFloat(height);
+      
+      // Calculate BMI
+      const heightInMeters = parsedHeight / 100;
+      const bmi = parsedWeight / (heightInMeters * heightInMeters);
+      
+      // Calculate days until goal
+      const daysUntilGoal = Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      
+      // Calculate weight difference
+      const weightDifference = parsedGoalWeight - parsedWeight;
+      const weightChangeType = weightDifference < 0 ? 'loss' : weightDifference > 0 ? 'gain' : 'maintenance';
       
       const surveyData = {
-        initialWeight: parsedWeight, // Store the starting weight
-        weight: parsedWeight, // Also store in weight field for compatibility
-        currentWeight: parsedWeight, // Set current weight to initial weight
+        initialWeight: parsedWeight,
+        weight: parsedWeight,
+        currentWeight: parsedWeight,
         goalWeight: parsedGoalWeight,
-        age: parseInt(age),
-        height: parseFloat(height),
+        age: parsedAge,
+        height: parsedHeight,
         goals,
         dietEndDate: endDate.toISOString(),
         selectedDiet: selectedDiet.id,
         surveyCompletedAt: new Date().toISOString(),
+        // Additional calculated fields for logging
+        bmi: parseFloat(bmi.toFixed(2)),
+        daysUntilGoal,
+        weightDifference: parseFloat(weightDifference.toFixed(2)),
+        weightChangeType,
+        dietName: selectedDiet.name,
+        dietDescription: selectedDiet.description,
       };
 
-      console.log('Saving survey data:', surveyData);
+      console.log('📋 ===== COMPLETE SURVEY DATA =====');
+      console.log('📋 User ID:', user?.id);
+      console.log('📋 User Name:', user?.name);
+      console.log('📋 User Email:', user?.email);
+      console.log('📋 Initial Weight:', parsedWeight, 'kg');
+      console.log('📋 Goal Weight:', parsedGoalWeight, 'kg');
+      console.log('📋 Weight Difference:', weightDifference, 'kg');
+      console.log('📋 Weight Change Type:', weightChangeType);
+      console.log('📋 Age:', parsedAge, 'years');
+      console.log('📋 Height:', parsedHeight, 'cm');
+      console.log('📋 BMI:', bmi.toFixed(2));
+      console.log('📋 Goals:', goals);
+      console.log('📋 Diet End Date:', endDate.toISOString());
+      console.log('📋 Days Until Goal:', daysUntilGoal);
+      console.log('📋 Selected Diet:', selectedDiet.name);
+      console.log('📋 Diet ID:', selectedDiet.id);
+      console.log('📋 Diet Description:', selectedDiet.description);
+      console.log('📋 Survey Completed At:', new Date().toISOString());
+      console.log('📋 ==================================');
 
       // Update user profile with survey data
       await updateUserProfile(surveyData);
+      console.log('✅ Survey data saved to user profile');
 
-      // Log the completion with all data
+      // Log the completion with ALL data
       await logAuth('SURVEY_COMPLETED', `User ${user?.name} completed onboarding survey`, {
         userId: user?.id,
+        userName: user?.name,
+        userEmail: user?.email,
         surveyData,
+        completedAt: new Date().toISOString(),
       }, user?.id, user?.name);
 
-      // Log individual survey responses for detailed tracking
-      await logProfile('INITIAL_WEIGHT_RECORDED', `Initial weight: ${weight} kg`, { initialWeight: parsedWeight, userId: user?.id }, user?.id, user?.name);
-      await logProfile('GOAL_WEIGHT_RECORDED', `Goal weight: ${goalWeight} kg`, { goalWeight: parsedGoalWeight, userId: user?.id }, user?.id, user?.name);
-      await logProfile('AGE_RECORDED', `Age: ${age} years`, { age: parseInt(age), userId: user?.id }, user?.id, user?.name);
-      await logProfile('HEIGHT_RECORDED', `Height: ${height} cm`, { height: parseFloat(height), userId: user?.id }, user?.id, user?.name);
-      await logProfile('GOALS_RECORDED', `Goals: ${goals}`, { goals, userId: user?.id }, user?.id, user?.name);
-      await logProfile('END_DATE_RECORDED', `Diet end date: ${endDate.toLocaleDateString()}`, { endDate: endDate.toISOString(), userId: user?.id }, user?.id, user?.name);
-      await logProfile('DIET_SELECTED', `Selected diet: ${selectedDiet.name}`, { diet: selectedDiet, userId: user?.id }, user?.id, user?.name);
+      // Log each individual field with detailed information
+      await logProfile('INITIAL_WEIGHT_RECORDED', `Initial weight: ${weight} kg`, { 
+        initialWeight: parsedWeight, 
+        unit: 'kg',
+        userId: user?.id,
+        recordedAt: new Date().toISOString(),
+      }, user?.id, user?.name);
 
-      console.log('Survey completed successfully, navigating to dashboard');
+      await logProfile('GOAL_WEIGHT_RECORDED', `Goal weight: ${goalWeight} kg`, { 
+        goalWeight: parsedGoalWeight, 
+        unit: 'kg',
+        weightDifference,
+        weightChangeType,
+        userId: user?.id,
+        recordedAt: new Date().toISOString(),
+      }, user?.id, user?.name);
+
+      await logProfile('AGE_RECORDED', `Age: ${age} years`, { 
+        age: parsedAge, 
+        unit: 'years',
+        userId: user?.id,
+        recordedAt: new Date().toISOString(),
+      }, user?.id, user?.name);
+
+      await logProfile('HEIGHT_RECORDED', `Height: ${height} cm`, { 
+        height: parsedHeight, 
+        unit: 'cm',
+        heightInMeters,
+        userId: user?.id,
+        recordedAt: new Date().toISOString(),
+      }, user?.id, user?.name);
+
+      await logProfile('BMI_CALCULATED', `BMI calculated: ${bmi.toFixed(2)}`, { 
+        bmi: parseFloat(bmi.toFixed(2)),
+        weight: parsedWeight,
+        height: parsedHeight,
+        heightInMeters,
+        userId: user?.id,
+        calculatedAt: new Date().toISOString(),
+      }, user?.id, user?.name);
+
+      await logProfile('GOALS_RECORDED', `Goals: ${goals}`, { 
+        goals, 
+        goalsLength: goals.length,
+        userId: user?.id,
+        recordedAt: new Date().toISOString(),
+      }, user?.id, user?.name);
+
+      await logProfile('END_DATE_RECORDED', `Diet end date: ${endDate.toLocaleDateString()}`, { 
+        endDate: endDate.toISOString(),
+        endDateFormatted: endDate.toLocaleDateString(),
+        daysUntilGoal,
+        userId: user?.id,
+        recordedAt: new Date().toISOString(),
+      }, user?.id, user?.name);
+
+      await logProfile('DIET_SELECTED', `Selected diet: ${selectedDiet.name}`, { 
+        dietId: selectedDiet.id,
+        dietName: selectedDiet.name,
+        dietDescription: selectedDiet.description,
+        dietIcon: selectedDiet.icon,
+        userId: user?.id,
+        selectedAt: new Date().toISOString(),
+      }, user?.id, user?.name);
+
+      // Log weight change plan
+      await logProfile('WEIGHT_CHANGE_PLAN', `Weight change plan: ${weightChangeType}`, {
+        currentWeight: parsedWeight,
+        goalWeight: parsedGoalWeight,
+        weightDifference,
+        weightChangeType,
+        daysUntilGoal,
+        dailyWeightChange: parseFloat((weightDifference / daysUntilGoal).toFixed(3)),
+        weeklyWeightChange: parseFloat((weightDifference / (daysUntilGoal / 7)).toFixed(3)),
+        userId: user?.id,
+        createdAt: new Date().toISOString(),
+      }, user?.id, user?.name);
+
+      // Log complete survey summary
+      await logProfile('SURVEY_SUMMARY', 'Complete survey summary', {
+        userId: user?.id,
+        userName: user?.name,
+        userEmail: user?.email,
+        physicalData: {
+          initialWeight: parsedWeight,
+          goalWeight: parsedGoalWeight,
+          age: parsedAge,
+          height: parsedHeight,
+          bmi: parseFloat(bmi.toFixed(2)),
+        },
+        planData: {
+          goals,
+          dietEndDate: endDate.toISOString(),
+          daysUntilGoal,
+          selectedDiet: selectedDiet.name,
+          dietId: selectedDiet.id,
+        },
+        calculatedData: {
+          weightDifference,
+          weightChangeType,
+          dailyWeightChange: parseFloat((weightDifference / daysUntilGoal).toFixed(3)),
+          weeklyWeightChange: parseFloat((weightDifference / (daysUntilGoal / 7)).toFixed(3)),
+        },
+        completedAt: new Date().toISOString(),
+      }, user?.id, user?.name);
+
+      console.log('✅ All survey data logged successfully');
       Alert.alert('Success', 'Your profile has been set up!', [
         {
           text: 'Continue',
-          onPress: () => router.replace('/(tabs)/dashboard'),
+          onPress: () => {
+            console.log('📋 Navigating to dashboard after survey completion');
+            logProfile('SURVEY_NAVIGATION', 'User navigating to dashboard after survey', { userId: user?.id }, user?.id, user?.name);
+            router.replace('/(tabs)/dashboard');
+          },
         },
       ]);
     } catch (error) {
-      console.log('Error saving survey data:', error);
-      await logAuth('SURVEY_ERROR', `Survey completion failed for ${user?.name}`, { error: String(error), userId: user?.id }, user?.id, user?.name);
+      console.error('❌ Error saving survey data:', error);
+      await logAuth('SURVEY_ERROR', `Survey completion failed for ${user?.name}`, { 
+        error: String(error), 
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : undefined,
+        userId: user?.id,
+        failedAt: new Date().toISOString(),
+      }, user?.id, user?.name);
       Alert.alert('Error', 'Failed to save your information. Please try again.');
     } finally {
       setIsLoading(false);
@@ -164,7 +385,10 @@ export default function SurveyScreen() {
                 placeholder="Enter current weight"
                 placeholderTextColor={colors.textSecondary}
                 value={weight}
-                onChangeText={setWeight}
+                onChangeText={(text) => {
+                  setWeight(text);
+                  console.log('📋 Weight input changed:', text);
+                }}
                 keyboardType="decimal-pad"
               />
               <Text style={styles.inputUnit}>kg</Text>
@@ -191,7 +415,10 @@ export default function SurveyScreen() {
                 placeholder="Enter goal weight"
                 placeholderTextColor={colors.textSecondary}
                 value={goalWeight}
-                onChangeText={setGoalWeight}
+                onChangeText={(text) => {
+                  setGoalWeight(text);
+                  console.log('📋 Goal weight input changed:', text);
+                }}
                 keyboardType="decimal-pad"
               />
               <Text style={styles.inputUnit}>kg</Text>
@@ -218,7 +445,10 @@ export default function SurveyScreen() {
                 placeholder="Enter age"
                 placeholderTextColor={colors.textSecondary}
                 value={age}
-                onChangeText={setAge}
+                onChangeText={(text) => {
+                  setAge(text);
+                  console.log('📋 Age input changed:', text);
+                }}
                 keyboardType="number-pad"
               />
               <Text style={styles.inputUnit}>years</Text>
@@ -245,7 +475,10 @@ export default function SurveyScreen() {
                 placeholder="Enter height"
                 placeholderTextColor={colors.textSecondary}
                 value={height}
-                onChangeText={setHeight}
+                onChangeText={(text) => {
+                  setHeight(text);
+                  console.log('📋 Height input changed:', text);
+                }}
                 keyboardType="decimal-pad"
               />
               <Text style={styles.inputUnit}>cm</Text>
@@ -271,7 +504,10 @@ export default function SurveyScreen() {
               placeholder="E.g., Lose weight, build muscle, eat healthier..."
               placeholderTextColor={colors.textSecondary}
               value={goals}
-              onChangeText={setGoals}
+              onChangeText={(text) => {
+                setGoals(text);
+                console.log('📋 Goals input changed:', text);
+              }}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
@@ -294,7 +530,10 @@ export default function SurveyScreen() {
             <Text style={styles.stepSubtitle}>Set a target date for your diet plan</Text>
             <TouchableOpacity 
               style={styles.dateButton}
-              onPress={() => setShowDatePicker(true)}
+              onPress={() => {
+                setShowDatePicker(true);
+                console.log('📋 Date picker opened');
+              }}
             >
               <IconSymbol 
                 ios_icon_name="calendar" 
@@ -320,6 +559,7 @@ export default function SurveyScreen() {
                   setShowDatePicker(Platform.OS === 'ios');
                   if (selectedDate) {
                     setEndDate(selectedDate);
+                    console.log('📋 End date changed:', selectedDate.toISOString());
                   }
                 }}
               />
@@ -351,7 +591,16 @@ export default function SurveyScreen() {
                       styles.dietCard,
                       selectedDiet?.id === diet.id && styles.dietCardSelected
                     ]}
-                    onPress={() => setSelectedDiet(diet)}
+                    onPress={() => {
+                      setSelectedDiet(diet);
+                      console.log('📋 Diet selected:', diet.name, '(ID:', diet.id, ')');
+                      logProfile('SURVEY_DIET_SELECTION', `User selected diet: ${diet.name}`, { 
+                        dietId: diet.id, 
+                        dietName: diet.name,
+                        step: 7,
+                        userId: user?.id 
+                      }, user?.id, user?.name);
+                    }}
                   >
                     <View style={[
                       styles.dietIconContainer,
