@@ -139,7 +139,11 @@ export default function DashboardScreen() {
       {/* Header with Profile */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.appName}>Menuer</Text>
+          <Image 
+            source={require('@/assets/images/1e765c28-78bc-4645-9ade-56e403f9a292.png')}
+            style={styles.appLogo}
+            resizeMode="contain"
+          />
           <Text style={styles.greeting}>Welcome back, {userName}!</Text>
         </View>
         <TouchableOpacity 
@@ -425,10 +429,9 @@ const styles = StyleSheet.create({
   headerLeft: {
     flex: 1,
   },
-  appName: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: colors.primary,
+  appLogo: {
+    width: 180,
+    height: 50,
     marginBottom: 4,
   },
   greeting: {
