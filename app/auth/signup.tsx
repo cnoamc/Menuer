@@ -35,8 +35,8 @@ export default function SignUpScreen() {
     try {
       console.log('Attempting sign up with:', { name, email });
       await signUp(name, email, password);
-      console.log('Sign up successful, navigating to dashboard');
-      router.replace('/(tabs)/dashboard');
+      console.log('Sign up successful, navigating to survey');
+      router.replace('/auth/survey');
     } catch (error) {
       console.log('Sign up error:', error);
       Alert.alert('Error', 'Failed to create account. Please try again.');

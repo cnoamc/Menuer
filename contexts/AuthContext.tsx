@@ -11,6 +11,13 @@ interface User {
   dietStartDate?: string;
   currentWeight?: number;
   goalWeight?: number;
+  weight?: number;
+  age?: number;
+  height?: number;
+  goals?: string;
+  dietEndDate?: string;
+  selectedDiet?: string;
+  surveyCompletedAt?: string;
 }
 
 interface AuthContextType {
@@ -79,6 +86,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           dietStartDate: users[email].dietStartDate,
           currentWeight: users[email].currentWeight,
           goalWeight: users[email].goalWeight,
+          weight: users[email].weight,
+          age: users[email].age,
+          height: users[email].height,
+          goals: users[email].goals,
+          dietEndDate: users[email].dietEndDate,
+          selectedDiet: users[email].selectedDiet,
+          surveyCompletedAt: users[email].surveyCompletedAt,
         };
         
         await AsyncStorage.setItem('user', JSON.stringify(mockUser));

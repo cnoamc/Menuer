@@ -53,8 +53,8 @@ function RootLayoutNav() {
       // User is not signed in and trying to access protected route
       console.log('Redirecting to welcome - user not authenticated');
       router.replace('/auth/welcome');
-    } else if (user && inAuthGroup) {
-      // User is signed in but on auth screen
+    } else if (user && inAuthGroup && segments[1] !== 'survey') {
+      // User is signed in but on auth screen (except survey)
       console.log('Redirecting to dashboard - user already authenticated');
       router.replace('/(tabs)/dashboard');
     }
@@ -79,6 +79,13 @@ function RootLayoutNav() {
       />
       <Stack.Screen 
         name="auth/signup" 
+        options={{ 
+          headerShown: false,
+          presentation: 'card'
+        }} 
+      />
+      <Stack.Screen 
+        name="auth/survey" 
         options={{ 
           headerShown: false,
           presentation: 'card'
