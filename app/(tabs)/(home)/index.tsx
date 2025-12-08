@@ -1,26 +1,142 @@
 
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image, Animated, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
+import { streakManager } from '@/utils/streakManager';
+import { notificationManager } from '@/utils/notificationManager';
+import { logSystem } from '@/utils/activityLogger';
+import * as Haptics from 'expo-haptics';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const [streak, setStreak] = useState(0);
+  const [canTapToday, setCanTapToday] = useState(true);
+  const [bounceAnim] = useState(new Animated.Value(1));
+  const [fireAnim] = useState(new Animated.Value(1));
+  const [glowAnim] = useState(new Animated.Value(0));
 
-  const getStreak = () => {
-    if (!user?.surveyCompletedAt) return 0;
-    const startDate = new Date(user.surveyCompletedAt);
-    const today = new Date();
-    const diffTime = Math.abs(today.getTime() - startDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+  useEffect(() => {
+    if (user) {
+      loadStreak();
+      setupNotifications();
+    }
+  }, [user]);
+
+  const loadStreak = async () => {
+    if (!user) return;
+    
+    try {
+      const streakData = await streakManager.getStreakData(user.id);
+      setStreak(streakData.count);
+      
+      // Check if already tapped today
+      const today = new Date().toDateString();
+      setCanTapToday(streakData.lastTapDate !== today);
+      
+      console.log('Streak loaded:', streakData.count, 'Can tap today:', streakData.lastTapDate !== today);
+    } catch (error) {
+      console.error('Error loading streak:', error);
+    }
   };
 
-  const streak = getStreak();
-  const progress = Math.min(100, (streak / 30) * 100);
+  const setupNotifications = async () => {
+    try {
+      const hasPermission = await notificationManager.requestPermissions();
+      if (hasPermission) {
+        await notificationManager.scheduleDailyStreakReminder();
+        console.log('Streak reminder notifications set up');
+      }
+    } catch (error) {
+      console.error('Error setting up notifications:', error);
+    }
+  };
+
+  const handleStreakTap = async () => {
+    if (!user) return;
+    
+    if (!canTapToday) {
+      Alert.alert(
+        'Already Tapped Today!',
+        'You\'ve already maintained your streak today. Come back tomorrow!',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      // Haptic feedback
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      // Animate bounce and fire
+      Animated.sequence([
+        Animated.parallel([
+          Animated.spring(bounceAnim, {
+            toValue: 1.2,
+            friction: 3,
+            tension: 40,
+            useNativeDriver: true,
+          }),
+          Animated.spring(fireAnim, {
+            toValue: 1.3,
+            friction: 3,
+            tension: 40,
+            useNativeDriver: true,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.spring(bounceAnim, {
+            toValue: 1,
+            friction: 3,
+            tension: 40,
+            useNativeDriver: true,
+          }),
+          Animated.spring(fireAnim, {
+            toValue: 1,
+            friction: 3,
+            tension: 40,
+            useNativeDriver: true,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start();
+
+      // Increment streak
+      const newStreakData = await streakManager.incrementStreak(user.id);
+      setStreak(newStreakData.count);
+      setCanTapToday(false);
+      
+      await logSystem('STREAK_TAPPED', `User tapped streak, new count: ${newStreakData.count}`, {
+        userId: user.id,
+        newStreak: newStreakData.count,
+      });
+
+      // Show success message
+      Alert.alert(
+        '🔥 Streak Updated!',
+        `Great job! Your streak is now ${newStreakData.count} days!`,
+        [{ text: 'Awesome!' }]
+      );
+
+      // Haptic success feedback
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.error('Error updating streak:', error);
+      Alert.alert('Error', 'Failed to update streak. Please try again.');
+    }
+  };
 
   const features = [
     {
@@ -52,6 +168,11 @@ export default function HomeScreen() {
       color: colors.primary,
     },
   ];
+
+  const glowOpacity = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.6],
+  });
 
   return (
     <ScrollView 
@@ -98,28 +219,61 @@ export default function HomeScreen() {
 
       {user && (
         <View style={styles.streakSection}>
-          <View style={styles.streakCard}>
-            <View style={styles.streakCircleContainer}>
+          <TouchableOpacity 
+            style={styles.streakCard}
+            onPress={handleStreakTap}
+            activeOpacity={0.8}
+          >
+            <Animated.View 
+              style={[
+                styles.streakGlow,
+                {
+                  opacity: glowOpacity,
+                  transform: [{ scale: bounceAnim }],
+                },
+              ]}
+            />
+            <Animated.View 
+              style={[
+                styles.streakCircleContainer,
+                { transform: [{ scale: bounceAnim }] },
+              ]}
+            >
               <View style={styles.streakCircleOuter}>
                 <View style={styles.streakCircleMiddle}>
                   <View style={styles.streakCircleInner}>
-                    <IconSymbol 
-                      ios_icon_name="flame.fill" 
-                      android_material_icon_name="local_fire_department" 
-                      size={48} 
-                      color={colors.accent}
-                    />
+                    <Animated.View style={{ transform: [{ scale: fireAnim }] }}>
+                      <IconSymbol 
+                        ios_icon_name="flame.fill" 
+                        android_material_icon_name="local_fire_department" 
+                        size={48} 
+                        color={colors.accent}
+                      />
+                    </Animated.View>
                     <Text style={styles.streakNumber}>{streak}</Text>
                     <Text style={styles.streakLabel}>Days</Text>
                   </View>
                 </View>
               </View>
-            </View>
+            </Animated.View>
             <Text style={styles.streakTitle}>Your Streak</Text>
             <Text style={styles.streakDescription}>
-              Keep going! You&apos;ve been consistent for {streak} days
+              {canTapToday 
+                ? 'Tap to maintain your streak today!' 
+                : `Great! You've maintained your streak for ${streak} days`}
             </Text>
-          </View>
+            {canTapToday && (
+              <View style={styles.tapIndicator}>
+                <IconSymbol 
+                  ios_icon_name="hand.tap" 
+                  android_material_icon_name="touch_app" 
+                  size={20} 
+                  color={colors.primary}
+                />
+                <Text style={styles.tapIndicatorText}>Tap to continue streak</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
       )}
 
@@ -248,6 +402,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 32,
     alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
     ...Platform.select({
       ios: {
         shadowColor: colors.primary,
@@ -260,8 +416,18 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  streakGlow: {
+    position: 'absolute',
+    top: -50,
+    left: -50,
+    right: -50,
+    bottom: -50,
+    backgroundColor: colors.accent,
+    borderRadius: 200,
+  },
   streakCircleContainer: {
     marginBottom: 24,
+    zIndex: 1,
   },
   streakCircleOuter: {
     width: 200,
@@ -304,11 +470,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 8,
+    zIndex: 1,
   },
   streakDescription: {
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
+    zIndex: 1,
+  },
+  tapIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: colors.lightPurple,
+    borderRadius: 20,
+    zIndex: 1,
+  },
+  tapIndicatorText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
   },
   welcomeCard: {
     backgroundColor: colors.primary,

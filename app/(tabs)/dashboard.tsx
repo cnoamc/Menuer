@@ -1,21 +1,34 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform, Image, TextInput, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMenu } from '@/contexts/MenuContext';
-import { logNavigation } from '@/utils/activityLogger';
+import { logNavigation, logProfile } from '@/utils/activityLogger';
 import { StreakWidget } from '@/components/widgets/StreakWidget';
-import { WeightWidget } from '@/components/widgets/WeightWidget';
 import { CaloriesWidget } from '@/components/widgets/CaloriesWidget';
 import { MiniCalendarWidget } from '@/components/widgets/MiniCalendarWidget';
+import { ProgressGraphWidget } from '@/components/widgets/ProgressGraphWidget';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const WEIGHT_HISTORY_KEY = 'weight_history';
+
+interface WeightEntry {
+  date: string;
+  weight: number;
+  timestamp: number;
+}
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, updateUserProfile } = useAuth();
   const { menus, currentDiet } = useMenu();
+  const [showWeightModal, setShowWeightModal] = useState(false);
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [tempWeight, setTempWeight] = useState('');
+  const [tempGoal, setTempGoal] = useState('');
 
   useEffect(() => {
     if (!user && !isLoading) {
@@ -27,9 +40,57 @@ export default function DashboardScreen() {
     }
   }, [user, isLoading]);
 
-  const handleLogWeight = () => {
-    logNavigation('NAVIGATION', 'User navigating to Profile to log weight', { from: 'dashboard', to: 'profile' }, user?.id, user?.name);
-    router.push('/(tabs)/profile');
+  const handleUpdateWeight = async () => {
+    const weight = parseFloat(tempWeight);
+    if (isNaN(weight) || weight <= 0) {
+      Alert.alert('Invalid Weight', 'Please enter a valid weight');
+      return;
+    }
+    
+    if (!user) return;
+
+    const oldWeight = user.currentWeight;
+    await logProfile('WEIGHT_UPDATE', `User updating weight from ${oldWeight}lbs to ${weight}lbs`, { oldWeight, newWeight: weight }, user?.id, user?.name);
+    
+    // Save to weight history
+    try {
+      const key = `${WEIGHT_HISTORY_KEY}_${user.id}`;
+      const data = await AsyncStorage.getItem(key);
+      const history: WeightEntry[] = data ? JSON.parse(data) : [];
+      
+      const newEntry: WeightEntry = {
+        date: new Date().toISOString(),
+        weight,
+        timestamp: Date.now(),
+      };
+      
+      history.push(newEntry);
+      await AsyncStorage.setItem(key, JSON.stringify(history));
+      console.log('Weight history updated');
+    } catch (error) {
+      console.error('Error saving weight history:', error);
+    }
+
+    await updateUserProfile({ currentWeight: weight });
+    setShowWeightModal(false);
+    setTempWeight('');
+    Alert.alert('Success', 'Weight updated successfully!');
+  };
+
+  const handleUpdateGoal = async () => {
+    const goal = parseFloat(tempGoal);
+    if (isNaN(goal) || goal <= 0) {
+      Alert.alert('Invalid Goal', 'Please enter a valid goal weight');
+      return;
+    }
+    
+    const oldGoal = user?.goalWeight;
+    await logProfile('GOAL_WEIGHT_UPDATE', `User updating goal weight from ${oldGoal}lbs to ${goal}lbs`, { oldGoal, newGoal: goal }, user?.id, user?.name);
+    
+    await updateUserProfile({ goalWeight: goal });
+    setShowGoalModal(false);
+    setTempGoal('');
+    Alert.alert('Success', 'Goal weight updated successfully!');
   };
 
   if (isLoading) {
@@ -119,25 +180,69 @@ export default function DashboardScreen() {
 
       <Text style={styles.sectionTitle}>Your Progress</Text>
 
+      {/* Weight and Goal Input Section */}
+      <View style={styles.weightInputSection}>
+        <TouchableOpacity 
+          style={styles.weightInputCard}
+          onPress={() => {
+            setTempWeight(currentWeight.toString());
+            setShowWeightModal(true);
+          }}
+        >
+          <View style={styles.weightInputHeader}>
+            <IconSymbol 
+              ios_icon_name="scalemass" 
+              android_material_icon_name="monitor_weight" 
+              size={24} 
+              color={colors.primary}
+            />
+            <Text style={styles.weightInputLabel}>Current Weight</Text>
+          </View>
+          <Text style={styles.weightInputValue}>{currentWeight.toFixed(1)} lbs</Text>
+          <Text style={styles.weightInputAction}>Tap to update</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.weightInputCard}
+          onPress={() => {
+            setTempGoal(goalWeight.toString());
+            setShowGoalModal(true);
+          }}
+        >
+          <View style={styles.weightInputHeader}>
+            <IconSymbol 
+              ios_icon_name="flag.fill" 
+              android_material_icon_name="flag" 
+              size={24} 
+              color={colors.success}
+            />
+            <Text style={styles.weightInputLabel}>Goal Weight</Text>
+          </View>
+          <Text style={styles.weightInputValue}>{goalWeight.toFixed(1)} lbs</Text>
+          <Text style={styles.weightInputAction}>Tap to update</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Progress Graph Widget */}
+      <ProgressGraphWidget 
+        currentWeight={currentWeight}
+        goalWeight={goalWeight}
+        initialWeight={initialWeight}
+        userId={user.id}
+      />
+
       <View style={styles.widgetsSection}>
         <View style={styles.widgetRow}>
           <View style={styles.widgetHalf}>
-            <WeightWidget 
-              currentWeight={currentWeight}
-              goalWeight={goalWeight}
-              initialWeight={initialWeight}
-              onLogWeight={handleLogWeight}
-            />
-          </View>
-          <View style={styles.widgetHalf}>
             <StreakWidget streak={daysSinceDietStarted} />
           </View>
+          <View style={styles.widgetHalf}>
+            <CaloriesWidget 
+              averageCalories={averageCalories}
+              percentageChange={90}
+            />
+          </View>
         </View>
-
-        <CaloriesWidget 
-          averageCalories={averageCalories}
-          percentageChange={90}
-        />
       </View>
 
       {currentDiet && (
@@ -260,6 +365,86 @@ export default function DashboardScreen() {
         />
         <Text style={styles.aiPlannerButtonText}>Open AI Planner</Text>
       </TouchableOpacity>
+
+      {/* Weight Update Modal */}
+      <Modal
+        visible={showWeightModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowWeightModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Update Weight</Text>
+            <Text style={styles.modalSubtitle}>Enter your current weight in pounds</Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              value={tempWeight}
+              onChangeText={setTempWeight}
+              keyboardType="decimal-pad"
+              placeholder="Enter weight"
+              placeholderTextColor={colors.textSecondary}
+              autoFocus
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setShowWeightModal(false)}
+              >
+                <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={handleUpdateWeight}
+              >
+                <Text style={styles.modalButtonTextConfirm}>Update</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Goal Update Modal */}
+      <Modal
+        visible={showGoalModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowGoalModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Update Goal Weight</Text>
+            <Text style={styles.modalSubtitle}>Enter your target weight in pounds</Text>
+            
+            <TextInput
+              style={styles.modalInput}
+              value={tempGoal}
+              onChangeText={setTempGoal}
+              keyboardType="decimal-pad"
+              placeholder="Enter goal weight"
+              placeholderTextColor={colors.textSecondary}
+              autoFocus
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setShowGoalModal(false)}
+              >
+                <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={handleUpdateGoal}
+              >
+                <Text style={styles.modalButtonTextConfirm}>Update</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -323,9 +508,48 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 16,
   },
+  weightInputSection: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  weightInputCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  weightInputHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  weightInputLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  weightInputValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  weightInputAction: {
+    fontSize: 11,
+    color: colors.primary,
+    fontWeight: '600',
+  },
   widgetsSection: {
     gap: 16,
     marginBottom: 24,
+    marginTop: 16,
   },
   widgetRow: {
     flexDirection: 'row',
@@ -516,5 +740,68 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.card,
     marginLeft: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  modalInput: {
+    backgroundColor: colors.highlight,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: colors.highlight,
+  },
+  modalButtonConfirm: {
+    backgroundColor: colors.primary,
+  },
+  modalButtonTextCancel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  modalButtonTextConfirm: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.card,
   },
 });
