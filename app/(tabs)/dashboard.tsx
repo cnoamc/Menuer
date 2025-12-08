@@ -127,7 +127,6 @@ export default function DashboardScreen() {
     return menuDate.toDateString() === today.toDateString();
   });
 
-  const userName = user.name || 'User';
   const daysSinceDietStarted = getDaysSinceDietStarted();
   const weightProgress = getWeightProgress();
   const weightToGo = getWeightToGo();
@@ -138,14 +137,6 @@ export default function DashboardScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {/* Header with Profile */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Image 
-            source={require('@/assets/images/42918fc1-edaa-4192-ba19-3e6b03e4c21f.png')}
-            style={styles.appLogo}
-            resizeMode="contain"
-          />
-          <Text style={styles.greeting}>Welcome back, {userName}!</Text>
-        </View>
         <TouchableOpacity 
           style={styles.profileButton}
           onPress={() => {
@@ -422,21 +413,9 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginBottom: 24,
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  appLogo: {
-    width: 180,
-    height: 50,
-    marginBottom: 4,
-  },
-  greeting: {
-    fontSize: 16,
-    color: colors.textSecondary,
   },
   profileButton: {
     width: 56,
