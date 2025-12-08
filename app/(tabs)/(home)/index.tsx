@@ -21,14 +21,15 @@ export default function HomeScreen() {
   };
 
   // Mock data for tracking (in a real app, this would come from actual tracking)
+  // Removed Calories, kept Streak, Macros, and Steps
   const trackingData = [
     {
-      icon: 'flame',
-      androidIcon: 'local_fire_department',
-      title: 'Calories',
-      value: user ? '1,850' : '0',
-      unit: 'kcal',
-      color: '#FF6B6B',
+      icon: 'calendar',
+      androidIcon: 'calendar_today',
+      title: 'Streak',
+      value: user ? getStreak().toString() : '0',
+      unit: 'days',
+      color: '#F38181',
     },
     {
       icon: 'chart.pie',
@@ -45,14 +46,6 @@ export default function HomeScreen() {
       value: user ? '8,432' : '0',
       unit: 'steps',
       color: '#95E1D3',
-    },
-    {
-      icon: 'calendar',
-      androidIcon: 'calendar_today',
-      title: 'Streak',
-      value: user ? getStreak().toString() : '0',
-      unit: 'days',
-      color: '#F38181',
     },
   ];
 
@@ -274,9 +267,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 24,
     gap: 12,
+    justifyContent: 'center',
   },
   trackingCard: {
-    width: '22%',
+    width: '28%',
     alignItems: 'center',
   },
   trackingIconContainer: {
