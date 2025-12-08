@@ -106,28 +106,7 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Tracking Cards - Only for authenticated users */}
-      {user && (
-        <View style={styles.trackingSection}>
-          {trackingData.map((item, index) => (
-            <React.Fragment key={index}>
-              <View style={styles.trackingCard}>
-                <View style={[styles.trackingIconContainer, { backgroundColor: item.color }]}>
-                  <IconSymbol 
-                    ios_icon_name={item.icon} 
-                    android_material_icon_name={item.androidIcon as any} 
-                    size={28} 
-                    color={colors.card}
-                  />
-                </View>
-                <Text style={styles.trackingTitle}>{item.title}</Text>
-              </View>
-            </React.Fragment>
-          ))}
-        </View>
-      )}
-
-      {/* Welcome Message for authenticated users */}
+      {/* Welcome Message for authenticated users - NOW FIRST */}
       {user && (
         <View style={styles.welcomeCard}>
           <View style={styles.welcomeContent}>
@@ -154,6 +133,27 @@ export default function HomeScreen() {
               color={colors.card}
             />
           </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Tracking Cards - Only for authenticated users - NOW SECOND */}
+      {user && (
+        <View style={styles.trackingSection}>
+          {trackingData.map((item, index) => (
+            <React.Fragment key={index}>
+              <View style={styles.trackingCard}>
+                <View style={[styles.trackingIconContainer, { backgroundColor: item.color }]}>
+                  <IconSymbol 
+                    ios_icon_name={item.icon} 
+                    android_material_icon_name={item.androidIcon as any} 
+                    size={28} 
+                    color={colors.card}
+                  />
+                </View>
+                <Text style={styles.trackingTitle}>{item.title}</Text>
+              </View>
+            </React.Fragment>
+          ))}
         </View>
       )}
 
