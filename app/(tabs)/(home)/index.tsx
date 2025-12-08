@@ -89,15 +89,6 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      {/* Hero Section */}
-      <View style={styles.heroSection}>
-        <Image 
-          source={require('@/assets/images/72808a6c-4aef-429a-a0ce-8984a87c7ed7.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
-
       {/* Greeting */}
       {user && (
         <View style={styles.greetingSection}>
@@ -262,15 +253,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingTop: Platform.OS === 'android' ? 48 : 20,
     paddingBottom: 120,
-  },
-  heroSection: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-  },
-  logo: {
-    width: 120,
-    height: 120,
   },
   greetingSection: {
     paddingHorizontal: 20,
