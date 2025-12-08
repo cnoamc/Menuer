@@ -7,6 +7,10 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMenu } from '@/contexts/MenuContext';
 import { logNavigation } from '@/utils/activityLogger';
+import { StreakWidget } from '@/components/widgets/StreakWidget';
+import { WeightWidget } from '@/components/widgets/WeightWidget';
+import { CaloriesWidget } from '@/components/widgets/CaloriesWidget';
+import { MiniCalendarWidget } from '@/components/widgets/MiniCalendarWidget';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -15,7 +19,6 @@ export default function DashboardScreen() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
-    // Redirect to sign in if not authenticated
     if (!user && !isLoading) {
       console.log('User not authenticated, redirecting to sign in');
       logNavigation('REDIRECT', 'User redirected to sign in (not authenticated)', { from: 'dashboard', to: 'signin' });
@@ -53,7 +56,11 @@ export default function DashboardScreen() {
     }
   };
 
-  // Show loading state while checking authentication
+  const handleLogWeight = () => {
+    logNavigation('NAVIGATION', 'User navigating to Profile to log weight', { from: 'dashboard', to: 'profile' }, user?.id, user?.name);
+    router.push('/(tabs)/profile');
+  };
+
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
@@ -63,12 +70,10 @@ export default function DashboardScreen() {
     );
   }
 
-  // Don't render if not authenticated
   if (!user) {
     return null;
   }
 
-  // Calculate days since diet started
   const getDaysSinceDietStarted = () => {
     if (!user.surveyCompletedAt) return 0;
     const startDate = new Date(user.surveyCompletedAt);
@@ -78,47 +83,26 @@ export default function DashboardScreen() {
     return diffDays;
   };
 
-  // Calculate weight progress based on actual logged data
-  const getWeightProgress = () => {
-    // Use initialWeight from survey, or fall back to weight field
-    const startWeight = user.initialWeight || user.weight || user.currentWeight || 0;
-    const currentWeight = user.currentWeight || user.weight || 0;
-    const goalWeight = user.goalWeight || 0;
-
-    console.log('Weight Progress Calculation:', {
-      startWeight,
-      currentWeight,
-      goalWeight,
-      user: {
-        initialWeight: user.initialWeight,
-        weight: user.weight,
-        currentWeight: user.currentWeight,
-        goalWeight: user.goalWeight,
-      }
-    });
-
-    // If we don't have valid data, return 0
-    if (!startWeight || !goalWeight || startWeight === goalWeight) {
-      return 0;
-    }
-
-    // Calculate total weight to lose/gain
-    const totalChange = startWeight - goalWeight;
-    
-    // Calculate weight already lost/gained
-    const currentChange = startWeight - currentWeight;
-    
-    // Calculate percentage (ensure it's between 0 and 100)
-    const percentage = Math.max(0, Math.min(100, (currentChange / totalChange) * 100));
-    
-    return percentage;
+  const getAverageCalories = () => {
+    if (menus.length === 0) return 0;
+    const total = menus.reduce((sum, menu) => sum + menu.totalCalories, 0);
+    return Math.round(total / menus.length);
   };
 
-  // Calculate weight remaining to goal
-  const getWeightToGo = () => {
-    const currentWeight = user.currentWeight || user.weight || 0;
-    const goalWeight = user.goalWeight || 0;
-    return Math.max(0, Math.abs(currentWeight - goalWeight));
+  const getActiveDaysThisWeek = () => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    
+    const activeDays: number[] = [];
+    menus.forEach(menu => {
+      const menuDate = new Date(menu.date);
+      if (menuDate >= startOfWeek && menuDate <= today) {
+        activeDays.push(menuDate.getDay());
+      }
+    });
+    
+    return [...new Set(activeDays)];
   };
 
   const todayMenus = menus.filter(menu => {
@@ -128,14 +112,14 @@ export default function DashboardScreen() {
   });
 
   const daysSinceDietStarted = getDaysSinceDietStarted();
-  const weightProgress = getWeightProgress();
-  const weightToGo = getWeightToGo();
+  const averageCalories = getAverageCalories();
+  const activeDays = getActiveDaysThisWeek();
   const currentWeight = user.currentWeight || user.weight || 0;
   const goalWeight = user.goalWeight || 0;
+  const initialWeight = user.initialWeight || user.weight || 0;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      {/* Header with Profile */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.profileButton}
@@ -160,83 +144,31 @@ export default function DashboardScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Analytics Cards */}
-      <View style={styles.analyticsSection}>
-        <Text style={styles.sectionTitle}>Your Progress</Text>
-        
-        <View style={styles.analyticsGrid}>
-          {/* Days on Diet */}
-          <View style={[styles.analyticsCard, styles.primaryCard]}>
-            <View style={styles.analyticsIconContainer}>
-              <IconSymbol 
-                ios_icon_name="calendar" 
-                android_material_icon_name="calendar_today" 
-                size={28} 
-                color={colors.card}
-              />
-            </View>
-            <Text style={styles.analyticsNumber}>{daysSinceDietStarted}</Text>
-            <Text style={styles.analyticsLabel}>Days on Diet</Text>
-          </View>
+      <Text style={styles.pageTitle}>Your Progress</Text>
 
-          {/* Current Diet */}
-          <View style={[styles.analyticsCard, styles.secondaryCard]}>
-            <View style={styles.analyticsIconContainer}>
-              <IconSymbol 
-                ios_icon_name="fork.knife" 
-                android_material_icon_name="restaurant" 
-                size={28} 
-                color={colors.card}
-              />
-            </View>
-            <Text style={styles.analyticsText}>{currentDiet?.name || 'None'}</Text>
-            <Text style={styles.analyticsLabel}>Current Diet</Text>
-          </View>
-        </View>
-
-        {/* Weight Progress Card */}
-        <View style={styles.weightCard}>
-          <View style={styles.weightHeader}>
-            <View>
-              <Text style={styles.weightTitle}>Weight Progress</Text>
-              <Text style={styles.weightSubtitle}>Keep up the great work!</Text>
-            </View>
-            <IconSymbol 
-              ios_icon_name="chart.line.uptrend.xyaxis" 
-              android_material_icon_name="trending_up" 
-              size={32} 
-              color={colors.primary}
+      <View style={styles.widgetsSection}>
+        <View style={styles.widgetRow}>
+          <View style={styles.widgetHalf}>
+            <WeightWidget 
+              currentWeight={currentWeight}
+              goalWeight={goalWeight}
+              initialWeight={initialWeight}
+              onLogWeight={handleLogWeight}
             />
           </View>
-          
-          <View style={styles.weightStats}>
-            <View style={styles.weightStatItem}>
-              <Text style={styles.weightStatLabel}>Current</Text>
-              <Text style={styles.weightStatValue}>{currentWeight.toFixed(1)} kg</Text>
-            </View>
-            <View style={styles.weightStatDivider} />
-            <View style={styles.weightStatItem}>
-              <Text style={styles.weightStatLabel}>Goal</Text>
-              <Text style={styles.weightStatValue}>{goalWeight.toFixed(1)} kg</Text>
-            </View>
-            <View style={styles.weightStatDivider} />
-            <View style={styles.weightStatItem}>
-              <Text style={styles.weightStatLabel}>To Go</Text>
-              <Text style={styles.weightStatValue}>{weightToGo.toFixed(1)} kg</Text>
-            </View>
-          </View>
-
-          {/* Progress Bar */}
-          <View style={styles.progressBarContainer}>
-            <View style={styles.progressBarBackground}>
-              <View style={[styles.progressBarFill, { width: `${weightProgress}%` }]} />
-            </View>
-            <Text style={styles.progressText}>{weightProgress.toFixed(0)}% Complete</Text>
+          <View style={styles.widgetHalf}>
+            <StreakWidget streak={daysSinceDietStarted} />
           </View>
         </View>
+
+        <CaloriesWidget 
+          averageCalories={averageCalories}
+          percentageChange={90}
+        />
+
+        <MiniCalendarWidget activeDays={activeDays} />
       </View>
 
-      {/* Current Diet Card */}
       {currentDiet && (
         <View style={styles.dietCard}>
           <View style={styles.dietCardHeader}>
@@ -265,52 +197,6 @@ export default function DashboardScreen() {
         </View>
       )}
 
-      {/* Generate Menu Button */}
-      <TouchableOpacity 
-        style={styles.generateButton}
-        onPress={handleGenerateMenu}
-        disabled={isGenerating}
-      >
-        {isGenerating ? (
-          <ActivityIndicator color={colors.card} />
-        ) : (
-          <>
-            <IconSymbol 
-              ios_icon_name="sparkles" 
-              android_material_icon_name="auto_awesome" 
-              size={24} 
-              color={colors.card}
-            />
-            <Text style={styles.generateButtonText}>Generate New Menu</Text>
-          </>
-        )}
-      </TouchableOpacity>
-
-      {/* Quick Stats */}
-      <View style={styles.statsSection}>
-        <View style={styles.statCard}>
-          <IconSymbol 
-            ios_icon_name="calendar" 
-            android_material_icon_name="calendar_today" 
-            size={28} 
-            color={colors.accent}
-          />
-          <Text style={styles.statNumber}>{todayMenus.length}</Text>
-          <Text style={styles.statLabel}>Today&apos;s Menus</Text>
-        </View>
-        <View style={styles.statCard}>
-          <IconSymbol 
-            ios_icon_name="list.bullet" 
-            android_material_icon_name="list" 
-            size={28} 
-            color={colors.secondary}
-          />
-          <Text style={styles.statNumber}>{menus.length}</Text>
-          <Text style={styles.statLabel}>Total Menus</Text>
-        </View>
-      </View>
-
-      {/* Recent Menus */}
       <View style={styles.menusSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Menus</Text>
@@ -388,6 +274,26 @@ export default function DashboardScreen() {
           ))
         )}
       </View>
+
+      <TouchableOpacity 
+        style={styles.generateButton}
+        onPress={handleGenerateMenu}
+        disabled={isGenerating}
+      >
+        {isGenerating ? (
+          <ActivityIndicator color={colors.card} />
+        ) : (
+          <>
+            <IconSymbol 
+              ios_icon_name="sparkles" 
+              android_material_icon_name="auto_awesome" 
+              size={24} 
+              color={colors.card}
+            />
+            <Text style={styles.generateButtonText}>Generate New Menu</Text>
+          </>
+        )}
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -415,7 +321,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   profileButton: {
     width: 56,
@@ -429,142 +335,28 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  analyticsSection: {
+  pageTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.text,
     marginBottom: 24,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 16,
+  widgetsSection: {
+    gap: 16,
+    marginBottom: 24,
   },
-  analyticsGrid: {
+  widgetRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
+    gap: 16,
   },
-  analyticsCard: {
+  widgetHalf: {
     flex: 1,
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  primaryCard: {
-    backgroundColor: colors.primary,
-  },
-  secondaryCard: {
-    backgroundColor: colors.secondary,
-  },
-  analyticsIconContainer: {
-    marginBottom: 12,
-  },
-  analyticsNumber: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: colors.card,
-    marginBottom: 4,
-  },
-  analyticsText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.card,
-    marginBottom: 4,
-  },
-  analyticsLabel: {
-    fontSize: 12,
-    color: colors.card,
-    opacity: 0.9,
-  },
-  weightCard: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-  },
-  weightHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  weightTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  weightSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  weightStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-  },
-  weightStatItem: {
-    alignItems: 'center',
-  },
-  weightStatDivider: {
-    width: 1,
-    backgroundColor: colors.highlight,
-  },
-  weightStatLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 8,
-  },
-  weightStatValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  progressBarContainer: {
-    gap: 8,
-  },
-  progressBarBackground: {
-    height: 12,
-    backgroundColor: colors.highlight,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: colors.success,
-    borderRadius: 6,
-  },
-  progressText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-    textAlign: 'center',
   },
   dietCard: {
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 24,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -620,74 +412,19 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 20,
   },
-  generateButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  generateButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.card,
-    marginLeft: 12,
-  },
-  statsSection: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  statNumber: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginTop: 8,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 4,
-  },
   menusSection: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
   },
   viewAllButton: {
     fontSize: 14,
@@ -777,5 +514,30 @@ const styles = StyleSheet.create({
   mealCount: {
     fontSize: 14,
     color: colors.textSecondary,
+  },
+  generateButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  generateButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.card,
+    marginLeft: 12,
   },
 });

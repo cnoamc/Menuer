@@ -5,12 +5,12 @@ import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
+import { StreakWidget } from '@/components/widgets/StreakWidget';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  // Calculate streak (days since diet started)
   const getStreak = () => {
     if (!user?.surveyCompletedAt) return 0;
     const startDate = new Date(user.surveyCompletedAt);
@@ -20,17 +20,7 @@ export default function HomeScreen() {
     return diffDays;
   };
 
-  // Mock data for tracking (in a real app, this would come from actual tracking)
-  // Removed Calories, kept Streak, Macros, and Steps
   const trackingData = [
-    {
-      icon: 'calendar',
-      androidIcon: 'calendar_today',
-      title: 'Streak',
-      value: user ? getStreak().toString() : '0',
-      unit: 'days',
-      color: '#F38181',
-    },
     {
       icon: 'chart.pie',
       androidIcon: 'pie_chart',
@@ -82,7 +72,6 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      {/* Greeting */}
       {user && (
         <View style={styles.greetingSection}>
           <Text style={styles.greetingTitle}>Good morning,</Text>
@@ -90,7 +79,6 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Welcome Message for authenticated users - NOW FIRST */}
       {user && (
         <View style={styles.welcomeCard}>
           <View style={styles.welcomeContent}>
@@ -120,7 +108,12 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Tracking Cards - Only for authenticated users - NOW SECOND */}
+      {user && (
+        <View style={styles.streakSection}>
+          <StreakWidget streak={getStreak()} />
+        </View>
+      )}
+
       {user && (
         <View style={styles.trackingSection}>
           {trackingData.map((item, index) => (
@@ -141,7 +134,6 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Features Section - Only show when user is NOT logged in */}
       {!user && (
         <View style={styles.featuresSection}>
           <Text style={styles.sectionTitle}>Features</Text>
@@ -166,7 +158,6 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* CTA Section */}
       {!user && (
         <View style={styles.ctaSection}>
           <Text style={styles.ctaTitle}>Ready to Start Your Journey?</Text>
@@ -188,7 +179,6 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Quick Actions for Authenticated Users */}
       {user && (
         <View style={styles.quickActionsSection}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -261,6 +251,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
   },
+  streakSection: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
   trackingSection: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -270,7 +264,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   trackingCard: {
-    width: '28%',
+    width: '45%',
     alignItems: 'center',
   },
   trackingIconContainer: {
@@ -302,7 +296,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: 20,
     padding: 24,
-    marginBottom: 32,
+    marginBottom: 24,
     marginHorizontal: 20,
     ...Platform.select({
       ios: {
