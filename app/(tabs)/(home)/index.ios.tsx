@@ -5,7 +5,6 @@ import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
-import { StreakWidget } from '@/components/widgets/StreakWidget';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -20,24 +19,7 @@ export default function HomeScreen() {
     return diffDays;
   };
 
-  const trackingData = [
-    {
-      icon: 'chart.pie',
-      androidIcon: 'pie_chart',
-      title: 'Macros',
-      value: user ? '75%' : '0%',
-      unit: 'goal',
-      color: '#4ECDC4',
-    },
-    {
-      icon: 'figure.walk',
-      androidIcon: 'directions_walk',
-      title: 'Steps',
-      value: user ? '8,432' : '0',
-      unit: 'steps',
-      color: '#95E1D3',
-    },
-  ];
+  const streak = getStreak();
 
   const features = [
     {
@@ -71,7 +53,12 @@ export default function HomeScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.contentContainer}
+      scrollEnabled={false}
+      bounces={false}
+    >
       {user && (
         <View style={styles.greetingSection}>
           <Text style={styles.greetingTitle}>Good morning,</Text>
@@ -110,27 +97,28 @@ export default function HomeScreen() {
 
       {user && (
         <View style={styles.streakSection}>
-          <StreakWidget streak={getStreak()} />
-        </View>
-      )}
-
-      {user && (
-        <View style={styles.trackingSection}>
-          {trackingData.map((item, index) => (
-            <React.Fragment key={index}>
-              <View style={styles.trackingCard}>
-                <View style={[styles.trackingIconContainer, { backgroundColor: item.color }]}>
-                  <IconSymbol 
-                    ios_icon_name={item.icon} 
-                    android_material_icon_name={item.androidIcon as any} 
-                    size={28} 
-                    color={colors.card}
-                  />
+          <View style={styles.streakCard}>
+            <View style={styles.streakCircleContainer}>
+              <View style={styles.streakCircleOuter}>
+                <View style={styles.streakCircleMiddle}>
+                  <View style={styles.streakCircleInner}>
+                    <IconSymbol 
+                      ios_icon_name="flame.fill" 
+                      android_material_icon_name="local_fire_department" 
+                      size={48} 
+                      color={colors.accent}
+                    />
+                    <Text style={styles.streakNumber}>{streak}</Text>
+                    <Text style={styles.streakLabel}>Days</Text>
+                  </View>
                 </View>
-                <Text style={styles.trackingTitle}>{item.title}</Text>
               </View>
-            </React.Fragment>
-          ))}
+            </View>
+            <Text style={styles.streakTitle}>Your Streak</Text>
+            <Text style={styles.streakDescription}>
+              Keep going! You&apos;ve been consistent for {streak} days
+            </Text>
+          </View>
         </View>
       )}
 
@@ -139,20 +127,18 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Features</Text>
           <View style={styles.featuresGrid}>
             {features.map((feature, index) => (
-              <React.Fragment key={index}>
-                <View style={styles.featureCard}>
-                  <View style={[styles.featureIconContainer, { backgroundColor: feature.color }]}>
-                    <IconSymbol 
-                      ios_icon_name={feature.icon} 
-                      android_material_icon_name={feature.androidIcon as any} 
-                      size={32} 
-                      color={colors.card}
-                    />
-                  </View>
-                  <Text style={styles.featureTitle}>{feature.title}</Text>
-                  <Text style={styles.featureDescription}>{feature.description}</Text>
+              <View key={index} style={styles.featureCard}>
+                <View style={[styles.featureIconContainer, { backgroundColor: feature.color }]}>
+                  <IconSymbol 
+                    ios_icon_name={feature.icon} 
+                    android_material_icon_name={feature.androidIcon as any} 
+                    size={32} 
+                    color={colors.card}
+                  />
                 </View>
-              </React.Fragment>
+                <Text style={styles.featureTitle}>{feature.title}</Text>
+                <Text style={styles.featureDescription}>{feature.description}</Text>
+              </View>
             ))}
           </View>
         </View>
@@ -236,6 +222,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingTop: 20,
     paddingBottom: 120,
+    flexGrow: 1,
   },
   greetingSection: {
     paddingHorizontal: 20,
@@ -255,34 +242,64 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 24,
   },
-  trackingSection: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    marginBottom: 24,
-    gap: 12,
-    justifyContent: 'center',
-  },
-  trackingCard: {
-    width: '45%',
+  streakCard: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 32,
     alignItems: 'center',
-  },
-  trackingIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: 12,
   },
-  trackingTitle: {
-    fontSize: 12,
-    fontWeight: '600',
+  streakCircleContainer: {
+    marginBottom: 24,
+  },
+  streakCircleOuter: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: colors.lightPurple,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  streakCircleMiddle: {
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  streakCircleInner: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: colors.lightPurple,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  streakNumber: {
+    fontSize: 36,
+    fontWeight: 'bold',
     color: colors.text,
+    marginTop: 8,
+  },
+  streakLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  streakTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  streakDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   welcomeCard: {

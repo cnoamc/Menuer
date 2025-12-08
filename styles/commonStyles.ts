@@ -1,20 +1,26 @@
 
-import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 export const colors = {
-  // Navy Blue, Purple, White color scheme for Menuer
-  background: '#F8F9FE',      // Very light blue-white
-  text: '#1A1F3A',            // Dark navy (almost black)
-  textSecondary: '#6B7280',   // Medium gray
-  primary: '#4F46E5',         // Indigo/Purple
-  secondary: '#7C3AED',       // Vibrant purple
-  accent: '#EC4899',          // Pink accent
-  card: '#FFFFFF',            // Pure white
-  highlight: '#EEF2FF',       // Light indigo
-  navy: '#1E3A8A',            // Navy blue
-  lightPurple: '#DDD6FE',     // Light purple
-  success: '#10B981',         // Green for success
-  warning: '#F59E0B',         // Orange for warnings
+  // Purple-based color scheme inspired by the design images
+  background: '#FFFFFF',        // Pure white background
+  text: '#1A1A2E',             // Dark navy text
+  textSecondary: '#6B7280',    // Medium gray
+  primary: '#7C3AED',          // Vibrant purple (main brand color)
+  secondary: '#A78BFA',        // Light purple
+  accent: '#EC4899',           // Pink accent
+  card: '#FFFFFF',             // Pure white cards
+  highlight: '#F3F4F6',        // Very light gray for subtle backgrounds
+  navy: '#1E3A8A',             // Navy blue
+  lightPurple: '#EDE9FE',      // Very light purple
+  success: '#10B981',          // Green for success
+  warning: '#F59E0B',          // Orange for warnings
+  error: '#EF4444',            // Red for errors
+  purple: '#7C3AED',           // Main purple
+  darkPurple: '#5B21B6',       // Dark purple
+  lightGray: '#F9FAFB',        // Light gray background
+  mediumGray: '#9CA3AF',       // Medium gray
+  darkGray: '#374151',         // Dark gray
 };
 
 export const buttonStyles = StyleSheet.create({
@@ -84,7 +90,7 @@ export const commonStyles = StyleSheet.create({
     padding: 16,
     marginVertical: 8,
     width: '100%',
-    boxShadow: '0px 4px 12px rgba(79, 70, 229, 0.1)',
+    boxShadow: '0px 4px 12px rgba(124, 58, 237, 0.1)',
     elevation: 3,
   },
   icon: {

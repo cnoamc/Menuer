@@ -105,12 +105,6 @@ export default function DashboardScreen() {
     return [...new Set(activeDays)];
   };
 
-  const todayMenus = menus.filter(menu => {
-    const menuDate = new Date(menu.date);
-    const today = new Date();
-    return menuDate.toDateString() === today.toDateString();
-  });
-
   const daysSinceDietStarted = getDaysSinceDietStarted();
   const averageCalories = getAverageCalories();
   const activeDays = getActiveDaysThisWeek();
@@ -121,6 +115,10 @@ export default function DashboardScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.pageTitle}>Dashboard</Text>
+          <Text style={styles.pageSubtitle}>Track your progress</Text>
+        </View>
         <TouchableOpacity 
           style={styles.profileButton}
           onPress={() => {
@@ -144,7 +142,11 @@ export default function DashboardScreen() {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.pageTitle}>Your Progress</Text>
+      <View style={styles.thisWeekSection}>
+        <MiniCalendarWidget activeDays={activeDays} />
+      </View>
+
+      <Text style={styles.sectionTitle}>Your Progress</Text>
 
       <View style={styles.widgetsSection}>
         <View style={styles.widgetRow}>
@@ -165,8 +167,6 @@ export default function DashboardScreen() {
           averageCalories={averageCalories}
           percentageChange={90}
         />
-
-        <MiniCalendarWidget activeDays={activeDays} />
       </View>
 
       {currentDiet && (
@@ -221,56 +221,55 @@ export default function DashboardScreen() {
           </View>
         ) : (
           menus.slice(0, 3).map((menu, index) => (
-            <React.Fragment key={index}>
-              <TouchableOpacity 
-                style={styles.menuCard}
-                onPress={() => {
-                  logNavigation('NAVIGATION', 'User viewing menu details from Dashboard', { from: 'dashboard', to: 'menu-detail', menuId: menu.id, dietType: menu.dietType }, user?.id, user?.name);
-                  router.push(`/menus/${menu.id}`);
-                }}
-              >
-                <View style={styles.menuCardHeader}>
-                  <View style={styles.menuIconContainer}>
-                    <IconSymbol 
-                      ios_icon_name="fork.knife" 
-                      android_material_icon_name="restaurant" 
-                      size={24} 
-                      color={colors.primary}
-                    />
-                  </View>
-                  <View style={styles.menuCardInfo}>
-                    <Text style={styles.menuCardTitle}>{menu.dietType} Menu</Text>
-                    <Text style={styles.menuCardDate}>
-                      {new Date(menu.date).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
-                    </Text>
-                  </View>
+            <TouchableOpacity 
+              key={index}
+              style={styles.menuCard}
+              onPress={() => {
+                logNavigation('NAVIGATION', 'User viewing menu details from Dashboard', { from: 'dashboard', to: 'menu-detail', menuId: menu.id, dietType: menu.dietType }, user?.id, user?.name);
+                router.push(`/menus/${menu.id}`);
+              }}
+            >
+              <View style={styles.menuCardHeader}>
+                <View style={styles.menuIconContainer}>
                   <IconSymbol 
-                    ios_icon_name="chevron.right" 
-                    android_material_icon_name="chevron_right" 
-                    size={20} 
-                    color={colors.textSecondary}
+                    ios_icon_name="fork.knife" 
+                    android_material_icon_name="restaurant" 
+                    size={24} 
+                    color={colors.primary}
                   />
                 </View>
-                <View style={styles.menuCardFooter}>
-                  <View style={styles.calorieInfo}>
-                    <IconSymbol 
-                      ios_icon_name="flame" 
-                      android_material_icon_name="local_fire_department" 
-                      size={16} 
-                      color={colors.accent}
-                    />
-                    <Text style={styles.calorieText}>{menu.totalCalories} cal</Text>
-                  </View>
-                  <Text style={styles.mealCount}>
-                    {3 + menu.snacks.length} meals
+                <View style={styles.menuCardInfo}>
+                  <Text style={styles.menuCardTitle}>{menu.dietType} Menu</Text>
+                  <Text style={styles.menuCardDate}>
+                    {new Date(menu.date).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
                   </Text>
                 </View>
-              </TouchableOpacity>
-            </React.Fragment>
+                <IconSymbol 
+                  ios_icon_name="chevron.right" 
+                  android_material_icon_name="chevron_right" 
+                  size={20} 
+                  color={colors.textSecondary}
+                />
+              </View>
+              <View style={styles.menuCardFooter}>
+                <View style={styles.calorieInfo}>
+                  <IconSymbol 
+                    ios_icon_name="flame" 
+                    android_material_icon_name="local_fire_department" 
+                    size={16} 
+                    color={colors.accent}
+                  />
+                  <Text style={styles.calorieText}>{menu.totalCalories} cal</Text>
+                </View>
+                <Text style={styles.mealCount}>
+                  {3 + menu.snacks.length} meals
+                </Text>
+              </View>
+            </TouchableOpacity>
           ))
         )}
       </View>
@@ -319,9 +318,22 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  pageTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  pageSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
   },
   profileButton: {
     width: 56,
@@ -335,11 +347,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  pageTitle: {
-    fontSize: 32,
+  thisWeekSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   widgetsSection: {
     gap: 16,
@@ -393,7 +408,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.highlight,
+    backgroundColor: colors.lightPurple,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -420,11 +435,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
   },
   viewAllButton: {
     fontSize: 14,
@@ -475,7 +485,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.highlight,
+    backgroundColor: colors.lightPurple,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
