@@ -56,8 +56,8 @@ export default function HomeScreen() {
     <ScrollView 
       style={styles.container} 
       contentContainerStyle={styles.contentContainer}
-      scrollEnabled={false}
-      bounces={false}
+      scrollEnabled={true}
+      bounces={true}
     >
       {user && (
         <View style={styles.greetingSection}>
