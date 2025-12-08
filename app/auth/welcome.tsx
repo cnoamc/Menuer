@@ -42,7 +42,7 @@ export default function WelcomeScreen() {
             resizeMode="contain"
           />
         </View>
-        <Text style={styles.subtitle}>Your Personal Menu Generator</Text>
+        <Text style={styles.subtitle}>Your Personal AI Meal Planner!</Text>
         <Text style={styles.description}>
           Generate unlimited personalized meal plans for any diet type
         </Text>
