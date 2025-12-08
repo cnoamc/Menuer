@@ -13,6 +13,10 @@ export default function TabLayout() {
         <Icon sf="chart.bar.fill" />
         <Label>Dashboard</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger key="info" name="info">
+        <Icon sf="info.circle.fill" />
+        <Label>Info</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger key="profile" name="profile">
         <Icon sf="person.fill" />
         <Label>Profile</Label>

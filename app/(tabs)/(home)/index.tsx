@@ -1,45 +1,58 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const howItWorksSteps = [
+  // Calculate streak (days since diet started)
+  const getStreak = () => {
+    if (!user?.surveyCompletedAt) return 0;
+    const startDate = new Date(user.surveyCompletedAt);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  // Mock data for tracking (in a real app, this would come from actual tracking)
+  const trackingData = [
     {
-      number: 1,
-      icon: 'fork.knife',
-      androidIcon: 'restaurant',
-      title: 'Choose Diet',
-      color: colors.primary,
+      icon: 'flame',
+      androidIcon: 'local_fire_department',
+      title: 'Calories',
+      value: user ? '1,850' : '0',
+      unit: 'kcal',
+      color: '#FF6B6B',
     },
     {
-      number: 2,
-      icon: 'target',
-      androidIcon: 'flag',
-      title: 'Set Goals',
-      color: colors.secondary,
+      icon: 'chart.pie',
+      androidIcon: 'pie_chart',
+      title: 'Macros',
+      value: user ? '75%' : '0%',
+      unit: 'goal',
+      color: '#4ECDC4',
     },
     {
-      number: 3,
-      icon: 'sparkles',
-      androidIcon: 'auto_awesome',
-      title: 'Generate',
-      color: colors.accent,
+      icon: 'figure.walk',
+      androidIcon: 'directions_walk',
+      title: 'Steps',
+      value: user ? '8,432' : '0',
+      unit: 'steps',
+      color: '#95E1D3',
     },
     {
-      number: 4,
-      icon: 'chart.line.uptrend.xyaxis',
-      androidIcon: 'trending_up',
-      title: 'Track',
-      color: colors.primary,
+      icon: 'calendar',
+      androidIcon: 'calendar_today',
+      title: 'Streak',
+      value: user ? getStreak().toString() : '0',
+      unit: 'days',
+      color: '#F38181',
     },
   ];
 
@@ -85,39 +98,55 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* Minimized How It Works */}
-      <View style={styles.howItWorksCompact}>
-        <Text style={styles.compactTitle}>How It Works</Text>
-        <View style={styles.stepsRow}>
-          {howItWorksSteps.map((step, index) => (
+      {/* Greeting */}
+      {user && (
+        <View style={styles.greetingSection}>
+          <Text style={styles.greetingTitle}>Good morning,</Text>
+          <Text style={styles.greetingSubtitle}>Track your diet</Text>
+        </View>
+      )}
+
+      {/* View Plan Card - Only for authenticated users */}
+      {user && (
+        <TouchableOpacity 
+          style={styles.viewPlanCard}
+          onPress={() => router.push('/(tabs)/dashboard')}
+        >
+          <View style={styles.viewPlanContent}>
+            <Image 
+              source={require('@/assets/images/7f3597b0-e6b2-463a-8553-98ae34684822.png')}
+              style={styles.viewPlanImage}
+              resizeMode="contain"
+            />
+            <TouchableOpacity style={styles.viewPlanButton}>
+              <Text style={styles.viewPlanButtonText}>View Plan</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* Tracking Cards - Only for authenticated users */}
+      {user && (
+        <View style={styles.trackingSection}>
+          {trackingData.map((item, index) => (
             <React.Fragment key={index}>
-              <View style={styles.compactStep}>
-                <View style={[styles.compactIconContainer, { backgroundColor: step.color }]}>
+              <View style={styles.trackingCard}>
+                <View style={[styles.trackingIconContainer, { backgroundColor: item.color }]}>
                   <IconSymbol 
-                    ios_icon_name={step.icon} 
-                    android_material_icon_name={step.androidIcon as any} 
-                    size={20} 
+                    ios_icon_name={item.icon} 
+                    android_material_icon_name={item.androidIcon as any} 
+                    size={28} 
                     color={colors.card}
                   />
                 </View>
-                <Text style={styles.compactStepNumber}>{step.number}</Text>
-                <Text style={styles.compactStepTitle}>{step.title}</Text>
+                <Text style={styles.trackingTitle}>{item.title}</Text>
               </View>
-              {index < howItWorksSteps.length - 1 && (
-                <IconSymbol 
-                  ios_icon_name="arrow.right" 
-                  android_material_icon_name="arrow_forward" 
-                  size={16} 
-                  color={colors.textSecondary}
-                  style={styles.arrowIcon}
-                />
-              )}
             </React.Fragment>
           ))}
         </View>
-      </View>
+      )}
 
-      {/* Welcome Message */}
+      {/* Welcome Message for authenticated users */}
       {user && (
         <View style={styles.welcomeCard}>
           <View style={styles.welcomeContent}>
@@ -262,12 +291,26 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
   },
-  howItWorksCompact: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 20,
+  greetingSection: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  greetingTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  greetingSubtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  viewPlanCard: {
+    backgroundColor: colors.highlight,
+    borderRadius: 24,
     marginHorizontal: 20,
     marginBottom: 24,
+    overflow: 'hidden',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -280,44 +323,73 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  compactTitle: {
+  viewPlanContent: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+  },
+  viewPlanImage: {
+    width: 200,
+    height: 150,
+    marginBottom: 20,
+  },
+  viewPlanButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 48,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  viewPlanButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 16,
-    textAlign: 'center',
+    color: colors.card,
   },
-  stepsRow: {
+  trackingSection: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    paddingHorizontal: 20,
+    marginBottom: 24,
+    gap: 12,
+  },
+  trackingCard: {
+    width: '22%',
     alignItems: 'center',
   },
-  compactStep: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  compactIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  trackingIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
-  compactStepNumber: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: colors.primary,
-    marginBottom: 4,
-  },
-  compactStepTitle: {
+  trackingTitle: {
     fontSize: 12,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
-  },
-  arrowIcon: {
-    marginHorizontal: 4,
   },
   welcomeCard: {
     backgroundColor: colors.primary,
