@@ -20,6 +20,12 @@ export default function TabLayout() {
       label: 'Dashboard',
     },
     {
+      name: 'ai-planner',
+      route: '/(tabs)/ai-planner',
+      icon: 'auto_awesome',
+      label: 'AI Planner',
+    },
+    {
       name: 'info',
       route: '/(tabs)/info',
       icon: 'info',
@@ -44,6 +50,7 @@ export default function TabLayout() {
       >
         <Stack.Screen key="home" name="(home)" />
         <Stack.Screen key="dashboard" name="dashboard" />
+        <Stack.Screen key="ai-planner" name="ai-planner" />
         <Stack.Screen key="info" name="info" />
         <Stack.Screen key="profile" name="profile" />
       </Stack>

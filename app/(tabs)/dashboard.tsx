@@ -15,8 +15,7 @@ import { MiniCalendarWidget } from '@/components/widgets/MiniCalendarWidget';
 export default function DashboardScreen() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const { menus, currentDiet, generateMenu } = useMenu();
-  const [isGenerating, setIsGenerating] = useState(false);
+  const { menus, currentDiet } = useMenu();
 
   useEffect(() => {
     if (!user && !isLoading) {
@@ -27,34 +26,6 @@ export default function DashboardScreen() {
       logNavigation('SCREEN_VIEW', 'User viewed Dashboard screen', { userId: user.id, menuCount: menus.length, hasDiet: !!currentDiet }, user.id, user.name);
     }
   }, [user, isLoading]);
-
-  const handleGenerateMenu = async () => {
-    if (!currentDiet) {
-      logNavigation('MENU_GENERATION_BLOCKED', 'Menu generation blocked - no diet selected', { userId: user?.id }, user?.id, user?.name);
-      Alert.alert('Select a Diet', 'Please select a diet type first', [
-        { 
-          text: 'Select Diet', 
-          onPress: () => {
-            logNavigation('NAVIGATION', 'User navigating to Diet Selection from alert', { from: 'dashboard', to: 'diet-select' }, user?.id, user?.name);
-            router.push('/diet/select');
-          }
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]);
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      await generateMenu();
-      Alert.alert('Success', 'New menu generated successfully!');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to generate menu. Please try again.');
-      console.log('Generate menu error:', error);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const handleLogWeight = () => {
     logNavigation('NAVIGATION', 'User navigating to Profile to log weight', { from: 'dashboard', to: 'profile' }, user?.id, user?.name);
@@ -217,7 +188,7 @@ export default function DashboardScreen() {
               color={colors.textSecondary}
             />
             <Text style={styles.emptyStateText}>No menus yet</Text>
-            <Text style={styles.emptyStateSubtext}>Generate your first menu to get started</Text>
+            <Text style={styles.emptyStateSubtext}>Use AI Planner to generate your first menu</Text>
           </View>
         ) : (
           menus.slice(0, 3).map((menu, index) => (
@@ -275,23 +246,19 @@ export default function DashboardScreen() {
       </View>
 
       <TouchableOpacity 
-        style={styles.generateButton}
-        onPress={handleGenerateMenu}
-        disabled={isGenerating}
+        style={styles.aiPlannerButton}
+        onPress={() => {
+          logNavigation('NAVIGATION', 'User navigating to AI Planner from Dashboard', { from: 'dashboard', to: 'ai-planner' }, user?.id, user?.name);
+          router.push('/(tabs)/ai-planner');
+        }}
       >
-        {isGenerating ? (
-          <ActivityIndicator color={colors.card} />
-        ) : (
-          <>
-            <IconSymbol 
-              ios_icon_name="sparkles" 
-              android_material_icon_name="auto_awesome" 
-              size={24} 
-              color={colors.card}
-            />
-            <Text style={styles.generateButtonText}>Generate New Menu</Text>
-          </>
-        )}
+        <IconSymbol 
+          ios_icon_name="sparkles" 
+          android_material_icon_name="auto_awesome" 
+          size={24} 
+          color={colors.card}
+        />
+        <Text style={styles.aiPlannerButtonText}>Open AI Planner</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -525,7 +492,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
   },
-  generateButton: {
+  aiPlannerButton: {
     backgroundColor: colors.primary,
     borderRadius: 16,
     padding: 20,
@@ -544,7 +511,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  generateButtonText: {
+  aiPlannerButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.card,
