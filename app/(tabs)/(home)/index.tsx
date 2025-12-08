@@ -106,25 +106,6 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* View Plan Card - Only for authenticated users */}
-      {user && (
-        <TouchableOpacity 
-          style={styles.viewPlanCard}
-          onPress={() => router.push('/(tabs)/dashboard')}
-        >
-          <View style={styles.viewPlanContent}>
-            <Image 
-              source={require('@/assets/images/7f3597b0-e6b2-463a-8553-98ae34684822.png')}
-              style={styles.viewPlanImage}
-              resizeMode="contain"
-            />
-            <TouchableOpacity style={styles.viewPlanButton}>
-              <Text style={styles.viewPlanButtonText}>View Plan</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      )}
-
       {/* Tracking Cards - Only for authenticated users */}
       {user && (
         <View style={styles.trackingSection}>
@@ -304,56 +285,6 @@ const styles = StyleSheet.create({
   greetingSubtitle: {
     fontSize: 16,
     color: colors.textSecondary,
-  },
-  viewPlanCard: {
-    backgroundColor: colors.highlight,
-    borderRadius: 24,
-    marginHorizontal: 20,
-    marginBottom: 24,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  viewPlanContent: {
-    alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 20,
-  },
-  viewPlanImage: {
-    width: 200,
-    height: 150,
-    marginBottom: 20,
-  },
-  viewPlanButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 48,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  viewPlanButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.card,
   },
   trackingSection: {
     flexDirection: 'row',
